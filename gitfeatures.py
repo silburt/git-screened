@@ -61,6 +61,20 @@ def get_package_freq(text, GProfile):
                     pass
                 loc_from = text.find(string_from, loc_from + 1) # get next instance, e.g. 'from numpy.X import b'
 
+# get frequency of comments vs. code
+def get_comment_freq(text, GProfile):
+    for sym_s, sym_e in [('#','\n'), ('"""', '"""')]:
+        start = text.find(sym_s)
+        end = text.find(sym_e, start + 1)
+        while start != -1:
+            GProfile.comment_words += len(text[start: end].split())
+            start = text.find(sym_s, end + 1)
+            end = text.find(sym_e, start + 1)
+
+    allowed_characters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    GProfile.code_words += len(''.join(c for c in text if c in allowed_characters ).split())
+
+# get distribution of commits over time
 def get_repo_commit_history(commits_url, GProfile):
     try:
         r = requests.get(commits_url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
@@ -72,6 +86,4 @@ def get_repo_commit_history(commits_url, GProfile):
             GProfile.commit_history.append(date)
     except:
         print('couldnt get commit history for %s'%commits_url)
-
-
 
