@@ -2,6 +2,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import json
+import pep8
+from subprocess import call
+import os
 
 # base directory is from ./run.py
 auth = open('utils/auth.txt').read()
@@ -62,17 +65,36 @@ def get_package_freq(text, GProfile):
                 loc_from = text.find(string_from, loc_from + 1) # get next instance, e.g. 'from numpy.X import b'
 
 # get frequency of comments vs. code
-def get_comment_freq(text, GProfile):
+def get_comment_code_ratio(text, GProfile):
     for sym_s, sym_e in [('#','\n'), ('"""', '"""')]:
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         while start != -1:
-            GProfile.comment_words += len(text[start: end].split())
+            GProfile.comment_lines += len(text[start: end].split('\n'))
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
 
-    allowed_characters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    GProfile.code_words += len(''.join(c for c in text if c in allowed_characters ).split())
+    GProfile.code_lines += len(text.split('\n'))
+
+# get summary stats of pep8 errors
+def get_pep8_errs(text, GProfile, show_source = True):
+    f = open('temp.py', 'w')
+    f.write(text)
+    f.close()
+
+    call('pycodestyle --statistics -qq temp.py > temp.txt', shell=True)
+    errs = open('temp.txt', 'r').read().splitlines()
+    for err in errs:
+        val, label = err.split('       ')
+        label = label.split('(')[0] # remove extra details
+        if label in GProfile.pep8.keys():
+            GProfile.pep8[label] += int(val)
+        else:
+            GProfile.pep8[label] = int(val)
+    
+    # cleanup
+    os.remove('temp.py')
+    os.remove('temp.txt')
 
 # get distribution of commits over time
 def get_repo_commit_history(commits_url, GProfile):
