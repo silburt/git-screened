@@ -2,7 +2,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import json
-import pep8
 from subprocess import call
 import os
 
@@ -10,24 +9,50 @@ import os
 auth = open('utils/auth.txt').read()
 username, pw = auth.split()[0], auth.split()[1]
 
-def scrape_readme_single(dir, r):
-    git_path = r.split('repos/')[1]
+def get_request(url, timeout=10):
+    r = None
+    i = 0
+    while r == None and i < 3:
+        try:
+            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
+                             auth=HTTPBasicAuth(username, pw), timeout=timeout)
+        except:
+            print('tried request %d, no success'%i)
+        i += 1
+    return r
+
+#def scrape_readme_single(dir, r):
+#    git_path = r.split('repos/')[1]
+#    url = 'https://raw.githubusercontent.com/%s/master/README'%git_path
+#    try:
+#        readme = requests.get('%s.md'%url,
+#                              headers={"Accept":"application/vnd.github.mercy-preview+json"},
+#                              auth=HTTPBasicAuth(username, pw))
+#        if(readme.ok):
+#            readme = readme.text
+#        else:
+#            readme = requests.get('%s.rst'%url,
+#                                  headers={"Accept":"application/vnd.github.mercy-preview+json"},
+#                                  auth=HTTPBasicAuth(username, pw)).text
+#
+#            # write to file
+#            readme_corpus = open('%s/%s.txt'%(dir, git_path.split('/')[1]), 'w')
+#            readme_corpus.write(str(readme.encode('utf8')))
+#            readme_corpus.close()
+#    except:
+#        print('No README file for %s. Skipping'%r)
+
+def get_readme_length(path, GProfile):
+    git_path = path.split('repos/')[1]
     url = 'https://raw.githubusercontent.com/%s/master/README'%git_path
     try:
-        readme = requests.get('%s.md'%url,
-                              headers={"Accept":"application/vnd.github.mercy-preview+json"},
-                              auth=HTTPBasicAuth(username, pw))
+        readme = get_request('%s.md'%url)
         if(readme.ok):
             readme = readme.text
         else:
-            readme = requests.get('%s.rst'%url,
-                                  headers={"Accept":"application/vnd.github.mercy-preview+json"},
-                                  auth=HTTPBasicAuth(username, pw)).text
-          
-            # write to file
-            readme_corpus = open('%s/%s.txt'%(dir, git_path.split('/')[1]), 'w')
-            readme_corpus.write(str(readme.encode('utf8')))
-            readme_corpus.close()
+            readme = get_request('%s.md'%url).text
+        
+        GProfile.readme_lines = len(readme.split('\n'))
     except:
         print('No README file for %s. Skipping'%r)
 
@@ -66,7 +91,7 @@ def get_package_freq(text, GProfile):
 
 # get frequency of comments vs. code
 def get_comment_code_ratio(text, GProfile):
-    for sym_s, sym_e in [('#','\n'), ('"""', '"""')]:
+    for sym_s, sym_e in [('#','\n'),('"""', '"""')]:  #
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         while start != -1:
@@ -74,34 +99,29 @@ def get_comment_code_ratio(text, GProfile):
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
 
-    GProfile.code_lines += len(text.split('\n'))
-
 # get summary stats of pep8 errors
 def get_pep8_errs(text, GProfile, show_source = True):
     f = open('temp.py', 'w')
     f.write(text)
     f.close()
 
-    call('pycodestyle --statistics -qq temp.py > temp.txt', shell=True)
+    call("pycodestyle --statistics -qq temp.py > temp.txt", shell=True)
     errs = open('temp.txt', 'r').read().splitlines()
     for err in errs:
-        val, label = err.split('       ')
-        label = label.split('(')[0] # remove extra details
-        if label in GProfile.pep8.keys():
-            GProfile.pep8[label] += int(val)
-        else:
-            GProfile.pep8[label] = int(val)
+        val, label = err.split()[0], err.split()[1]
+        label = label[0:2] # remove extra details
+        GProfile.pep8[label] += int(val)
     
     # cleanup
-    os.remove('temp.py')
-    os.remove('temp.txt')
+    #os.remove('temp.py')
+    #os.remove('temp.txt')
 
 # get distribution of commits over time
 def get_repo_commit_history(commits_url, GProfile):
     try:
-        r = requests.get(commits_url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
-                     auth=HTTPBasicAuth(username, pw))
+        r = get_request(commits_url.split('{/sha}')[0])
         commits = json.loads(r.text or r.content)
+        GProfile.n_commits = len(commits)
         for commit in commits:
             date_string = commit['commit']['author']['date']
             date = datetime.strptime(date_string.split("T")[0],'%Y-%m-%d')
