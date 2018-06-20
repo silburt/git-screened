@@ -94,7 +94,6 @@ def get_forks(repo_list_dir, output_dir):
 
 def get_training_repos(repo_list_dir, output_dir, start, stop):
     repos = open(repo_list_dir, 'r').read().splitlines()
-    data = open(output_dir, 'a')
     # Change the behavior of SIGALRM
     signal.signal(signal.SIGALRM, timeout_handler)
     for repo in reversed(repos[start: stop]):
@@ -126,17 +125,17 @@ def get_training_repos(repo_list_dir, output_dir, start, stop):
                 
                 # save
                 string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
+                data = open(output_dir, 'a')
                 data.write(string%(repo, GP.n_pyfiles, GP.code_lines, GP.comment_lines,
                                    GP.docstring_lines, GP.test_lines,
                                    GP.readme_lines, GP.n_commits, GP.commits_per_time,
                                    GP.stargazers, GP.forks))
+                data.close()
                 for key in GP.pep8.keys():
                     data.write(', %d'%GP.pep8[key])
                 data.write('\n')
         except TimeoutException:
             print('%s timed out, skipping!'%repo)
-        break  # TEMP!!!!!!!!!!!!
-    data.close()
 
 if __name__ == '__main__':
     repo_dir = 'repo_data/bottom_stars_repos_Python.txt'
