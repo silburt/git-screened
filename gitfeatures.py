@@ -8,13 +8,15 @@ import os
 # base directory is from ./run.py
 auth = open('utils/auth.txt').read()
 username, pw = auth.split()[0], auth.split()[1]
+authtoken = open('utils/token.txt').read()
 
 def get_request(url, timeout=10):
     r = None
     i = 0
     while r == None and i < 3:
         try:
-            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
+            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json",
+                             "Authorization": "token %s"%authtoken},
                              auth=HTTPBasicAuth(username, pw), timeout=timeout)
         except:
             print('tried request %d, no success'%i)
@@ -63,20 +65,21 @@ def get_comment_code_ratio(text, GProfile):
 
 # get summary stats of pep8 errors
 def get_pep8_errs(text, GProfile, show_source = True):
-    f = open('temp.py', 'w')
+    ext = '3'
+    f = open('temp%s.py'%ext, 'w')
     f.write(text)
     f.close()
 
-    call("pycodestyle --statistics -qq temp.py > temp.txt", shell=True)
-    errs = open('temp.txt', 'r').read().splitlines()
+    call("pycodestyle --statistics -qq temp%s.py > temp%s.txt"%(ext, ext), shell=True)
+    errs = open('temp%s.txt'%ext, 'r').read().splitlines()
     for err in errs:
         val, label = err.split()[0], err.split()[1]
         label = label[0:2] # remove extra details
         GProfile.pep8[label] += int(val)
     
     # cleanup
-    os.remove('temp.py')
-    os.remove('temp.txt')
+    os.remove('temp%s.py'%ext)
+    os.remove('temp%s.txt'%ext)
 
 # get distribution of commits over time
 def get_repo_commit_history(item, GProfile):

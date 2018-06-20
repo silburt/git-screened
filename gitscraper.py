@@ -5,10 +5,6 @@ import gitfeatures as gf
 import matplotlib.pyplot as plt
 import signal
 
-# base directory is from ./run.py
-auth = open('utils/auth.txt').read()
-username, pw = auth.split()[0], auth.split()[1]
-
 class TimeoutException(Exception):   # Custom exception class
     pass
 
@@ -100,48 +96,50 @@ def get_training_repos(repo_list_dir, output_dir, start, stop):
         GP = Github_Profile([])
         GP.user = repo.split('repos/')[1].split('/')[0]
         r = gf.get_request(repo)
-        if r is None:
-            continue
-        item = json.loads(r.text or r.content)
-        signal.alarm(60)
-        try:
-            if item['fork'] == False:  # for now ignore forks
-                contents_url = '%s/contents'%item['url']
-                
-                # scrape commit history
-                gf.get_repo_commit_history(item, GP)
-                
-                # scrape readme
-                gf.get_readme_length(contents_url, GP)
-                
-                # scrape file-by-file stats
-                digest_repo(contents_url, GP)
-                
-                # scrape stargazers
-                GP.stargazers = item['stargazers_count']
-                
-                # scrape forks
-                GP.forks = item['forks_count']
-                
-                # save
-                string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
-                data = open(output_dir, 'a')
-                data.write(string%(repo, GP.n_pyfiles, GP.code_lines, GP.comment_lines,
-                                   GP.docstring_lines, GP.test_lines,
-                                   GP.readme_lines, GP.n_commits, GP.commits_per_time,
-                                   GP.stargazers, GP.forks))
-                data.close()
-                for key in GP.pep8.keys():
-                    data.write(', %d'%GP.pep8[key])
-                data.write('\n')
-        except TimeoutException:
-            print('%s timed out, skipping!'%repo)
+        if r.ok:
+            item = json.loads(r.text or r.content)
+            signal.alarm(60)
+            try:
+                if item['fork'] == False:  # for now ignore forks
+                    contents_url = '%s/contents'%item['url']
+                    
+                    # scrape commit history
+                    gf.get_repo_commit_history(item, GP)
+                    
+                    # scrape readme
+                    gf.get_readme_length(contents_url, GP)
+                    
+                    # scrape file-by-file stats
+                    digest_repo(contents_url, GP)
+                    
+                    # scrape stargazers
+                    GP.stargazers = item['stargazers_count']
+                    
+                    # scrape forks
+                    GP.forks = item['forks_count']
+                    
+                    # save
+                    string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
+                    data = open(output_dir, 'a')
+                    data.write(string%(repo, GP.n_pyfiles, GP.code_lines, GP.comment_lines,
+                                       GP.docstring_lines, GP.test_lines,
+                                       GP.readme_lines, GP.n_commits, GP.commits_per_time,
+                                       GP.stargazers, GP.forks))
+                                       
+                    for key in GP.pep8.keys():
+                        data.write(', %d'%GP.pep8[key])
+                    data.write('\n')
+                    data.close()
+            except TimeoutException:
+                print('%s timed out, skipping!'%repo)
+            except:
+                print('skipping repo %s'%repo)
 
 if __name__ == '__main__':
-    repo_dir = 'repo_data/bottom_stars_repos_Python.txt'
-    output_dir = "repo_data/bottom_stars_stats_Python.txt"
+    repo_dir = 'repo_data/top_stars_repos_Python.txt'
+    output_dir = "repo_data/top_stars_stats_Python.txt"
 
-    for i in reversed(range(40)):
+    for i in range(30):
         get_training_repos(repo_dir, output_dir, i*100, (i+1)*100)
 
 # scrape global stats about user
