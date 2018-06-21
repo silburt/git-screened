@@ -22,8 +22,8 @@ class Github_Profile:
         self.commit_history = []
         self.commits_per_time = 0
         self.n_commits = 0
-        self.stargazers = 0
-        self.forks = 0
+        self.n_stars = 0
+        self.n_forks = 0
         self.test_lines = 0
         self.docstring_lines = 0
         self.comment_lines = 0
@@ -89,10 +89,10 @@ def get_features(item, GP):
     digest_repo(contents_url, GP)
             
     # scrape stargazers
-    GP.stargazers = item['stargazers_count']
+    GP.n_stars = item['stargazers_count']
             
     # scrape forks
-    GP.forks = item['forks_count']
+    GP.n_forks = item['forks_count']
 
     return GP
 
@@ -121,7 +121,7 @@ def get_training_repos(repo_list_dir, output_dir):
                     data.write(string%(repo, GP.n_pyfiles, GP.code_lines, GP.comment_lines,
                                        GP.docstring_lines, GP.test_lines,
                                        GP.readme_lines, GP.n_commits, GP.commits_per_time,
-                                       GP.stargazers, GP.forks))
+                                       GP.n_stars, GP.n_forks))
                                        
                     for key in GP.pep8.keys():
                         data.write(', %d'%GP.pep8[key])

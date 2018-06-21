@@ -8,12 +8,18 @@ import dash_html_components as html
 import dash_table_experiments as dt
 import gitscraper as gs
 import gitfeatures as gf
+import modeling as mod
 import json
+import pickle
 
 app = dash.Dash()
+my_css_url = "https://unpkg.com/normalize.css@5.0.0"
+app.css.append_css({"external_url": my_css_url})
 
 app.layout = html.Div([
-                       html.Label('Repository Name (format: user/repo)'),
+                       html.H1('git-screened', style={'font-style': 'Courier New',
+                               'font-size': 25, 'text-align': 'center'}),
+                       html.Label('Repository Name (Format: user/repo)', style={'text-align': 'center'}),
                        dcc.Input(id='repo', value='', type="text"),
                        html.Button('Search', id='button'),
                        html.Div(id='my-div', children='Enter a value and press Search'),
@@ -42,6 +48,7 @@ app.layout = html.Div([
                        
                        ])
 
+#######Scraping/Processing Functions
 # So, it looks like I can't call this function from gitscraper.py for some reason.
 # Hypothesis: From the error: ValueError: signal only works in main thread, seems like
 # you can't reference an outside function that then references a different outside func.
@@ -78,12 +85,40 @@ def get_features(item):
     digest_repo(contents_url, GP)
     
     # scrape stargazers
-    GP.stargazers = item['stargazers_count']
+    GP.n_stars = item['stargazers_count']
     
     # scrape forks
-    GP.forks = item['forks_count']
+    GP.n_forks = item['forks_count']
     return GP
 
+####### Output Function
+def output(input_value, GP, score):
+    if score == 1:
+        outcome = 'PASS'
+        color = 'green'
+        link = ('https://raw.githubusercontent.com/silburt/'
+                'git-screened/master/app_images/baby.jpg')
+    else:
+        outcome = 'FAIL'
+        color = 'red'
+        link = ('https://raw.githubusercontent.com/silburt/'
+                'git-screened/master/app_images/stormtrooper.jpg')
+    return html.Div([
+                     html.H1('Results for Repository: "{}"'.format(input_value)),
+                     html.Div([
+                               html.H2('Status: {}'.format(outcome), style={'color':color}),
+                               html.Img(src=link)
+                              ]),
+
+                     html.Div([
+                               html.P('pep8 errors: {}'.format(GP.pep8)),
+                               html.P('commits per time: {}'.format(GP.commits_per_time))
+                               ]),
+                    ])
+#elif score == -1:
+
+
+####### Main App Callback
 @app.callback(
               Output(component_id='my-div', component_property='children'),
               [Input('button', 'n_clicks')],
@@ -92,14 +127,9 @@ def update_output_div(n_clicks, input_value):
     r = gf.get_request('https://api.github.com/repos/%s'%input_value)
     if r.ok:
         item = json.loads(r.text or r.content)
-        GP = get_features(item) 
-        string = ('Stats for "{}"\n:'
-                  'pep8 errors: {}\n'
-                  'commits per time: {}\n'
-                  ).format(input_value, GP.pep8, GP.commits_per_time)
-        return string
-    else:
-        return 'Couldnt get stats for "{}"'.format(input_value)
+        GP = get_features(item)
+        score = mod.classify_repo(GP)
+        return output(input_value, GP, score)
 
 if __name__ == '__main__':
     app.run_server()
