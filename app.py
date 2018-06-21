@@ -92,7 +92,7 @@ def update_output_div(n_clicks, input_value):
     r = gf.get_request('https://api.github.com/repos/%s'%input_value)
     if r.ok:
         item = json.loads(r.text or r.content)
-        GP = get_features(item)
+        GP = get_features(item) 
         string = ('Stats for "{}"\n:'
                   'pep8 errors: {}\n'
                   'commits per time: {}\n'
