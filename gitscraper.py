@@ -4,6 +4,7 @@ import json
 import gitfeatures as gf
 import matplotlib.pyplot as plt
 import signal
+import numpy as np
 
 class TimeoutException(Exception):   # Custom exception class
     pass
@@ -75,24 +76,35 @@ def digest_repo(repo_url, GProfile):
             except TimeoutException:
                 print('%s timed out, skipping!'%item['download_url'])
 
-def get_forks(repo_list_dir, output_dir):
-    repos = open(repo_list_dir, 'r').read().splitlines()
-    data = open(output_dir, 'a')
-    for repo in reversed(repos):
-        r = gf.get_request(repo)
-        if r is None:
-            continue
-        item = json.loads(r.text or r.content)
-        stargazer = item['forks_count']
-        data.write('%s, %d\n'%(repo, stargazer))
-        print(repo)
-    data.close()
+def get_features(item, GP):
+    contents_url = '%s/contents'%item['url']
+    
+    # scrape commit history
+    gf.get_repo_commit_history(item, GP)
+        
+    # scrape readme
+    gf.get_readme_length(contents_url, GP)
+        
+    # scrape file-by-file stats
+    digest_repo(contents_url, GP)
+            
+    # scrape stargazers
+    GP.stargazers = item['stargazers_count']
+            
+    # scrape forks
+    GP.forks = item['forks_count']
 
-def get_training_repos(repo_list_dir, output_dir, start, stop):
+    return GP
+
+def get_training_repos(repo_list_dir, output_dir):
+    proc_repos = np.loadtxt(output_dir, delimiter=',', usecols=[0], dtype='str')
     repos = open(repo_list_dir, 'r').read().splitlines()
     # Change the behavior of SIGALRM
     signal.signal(signal.SIGALRM, timeout_handler)
-    for repo in reversed(repos[start: stop]):
+    for repo in repos:
+        if repo in proc_repos:
+            print('already scanned %s'%repo)
+            continue
         GP = Github_Profile([])
         GP.user = repo.split('repos/')[1].split('/')[0]
         r = gf.get_request(repo)
@@ -101,23 +113,8 @@ def get_training_repos(repo_list_dir, output_dir, start, stop):
             signal.alarm(60)
             try:
                 if item['fork'] == False:  # for now ignore forks
-                    contents_url = '%s/contents'%item['url']
-                    
-                    # scrape commit history
-                    gf.get_repo_commit_history(item, GP)
-                    
-                    # scrape readme
-                    gf.get_readme_length(contents_url, GP)
-                    
-                    # scrape file-by-file stats
-                    digest_repo(contents_url, GP)
-                    
-                    # scrape stargazers
-                    GP.stargazers = item['stargazers_count']
-                    
-                    # scrape forks
-                    GP.forks = item['forks_count']
-                    
+                    GP = get_features(item, GP)
+
                     # save
                     string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
                     data = open(output_dir, 'a')
@@ -139,8 +136,7 @@ if __name__ == '__main__':
     repo_dir = 'repo_data/top_stars_repos_Python.txt'
     output_dir = "repo_data/top_stars_stats_Python.txt"
 
-    for i in range(30):
-        get_training_repos(repo_dir, output_dir, i*100, (i+1)*100)
+    get_training_repos(repo_dir, output_dir)
 
 # scrape global stats about user
 #def scrape_by_user(git_user, packages, readme_dir='candidate'):
@@ -176,3 +172,16 @@ if __name__ == '__main__':
 #    print(User.n_pytests, User.code_lines, User.n_pyfiles, float(User.comment_lines)/User.code_lines,
 #          float(User.readme_lines)/User.code_lines, User.code_lines/User.n_pyfiles)
 #    print(User.pep8)
+
+#def get_forks(repo_list_dir, output_dir):
+#    repos = open(repo_list_dir, 'r').read().splitlines()
+#    data = open(output_dir, 'a')
+#    for repo in reversed(repos):
+#        r = gf.get_request(repo)
+#        if r is None:
+#            continue
+#        item = json.loads(r.text or r.content)
+#        stargazer = item['forks_count']
+#        data.write('%s, %d\n'%(repo, stargazer))
+#        print(repo)
+#    data.close()
