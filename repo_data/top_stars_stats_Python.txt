@@ -1949,3 +1949,10 @@ https://api.github.com/repos/cyrus-and/gdb-dashboard, 0, 0, 0, 0, 0, 372, 30, 33
 https://api.github.com/repos/humphd/have-fun-with-machine-learning, 1, 114, 15, 0, 0, 850, 30, 17.966667, 4605, 464, 0, 0, 4, 0, 17, 0, 0, 0, 3, 0, 0, 0
 https://api.github.com/repos/chrissimpkins/codeface, 18, 1385, 394, 28, 131, 412, 30, 36.766667, 4587, 340, 5, 1039, 5, 0, 66, 0, 0, 0, 0, 3, 0, 0
 https://api.github.com/repos/programthink/zhao, 1, 301, 5, 0, 0, 70, 30, 28.133333, 4584, 1264, 2, 76, 12, 0, 4, 0, 0, 0, 0, 0, 0, 0
+https://api.github.com/repos/kamyu104/LeetCode, 772, 42913, 16916, 3927, 465, 866, 30, 53.633333, 4576, 1878, 125, 368, 777, 10, 1684, 187, 0, 9, 29, 52, 0, 16
+https://api.github.com/repos/apachecn/MachineLearning, 148, 25300, 5428, 2498, 1409, 409, 30, 16.033333, 4593, 1679, 196, 626, 99, 82, 629, 75, 0, 16, 319, 7, 0, 10
+https://api.github.com/repos/Yelp/elastalert, 24, 12402, 860, 464, 5644, 205, 30, 43.500000, 4571, 965, 0, 0, 0, 0, 1180, 0, 0, 0, 0, 0, 0, 0
+https://api.github.com/repos/pypa/pip, 412, 112800, 10604, 15592, 14386, 33, 30, 88.800000, 4522, 1529, 10056, 58539, 392, 30, 3102, 48, 0, 0, 208, 12, 0, 0
+https://api.github.com/repos/kennethreitz/records, 9, 963, 72, 125, 291, 111, 30, 42.500000, 4472, 337, 3, 7, 12, 0, 11, 5, 0, 0, 0, 0, 0, 0
+https://api.github.com/repos/detailyang/awesome-cheatsheet, 1, 40, 10, 0, 0, 210, 30, 56.733333, 4461, 642, 3, 0, 0, 0, 5, 0, 0, 0, 0, 1, 0, 4
+https://api.github.com/repos/Supervisor/supervisor, 65, 32999, 1713, 1474, 17202, 31, 30, 91.733333, 4429, 813, 302, 1697, 753, 43, 242, 79, 0, 1, 6, 17, 0, 4

@@ -41,9 +41,10 @@ app.layout = html.Div([
 #                       html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
                        
                        ])
-# So, it looks like dash can only reference one node away.
-# I.e. you can't reference an outside function that then references a different
-# Outside function
+
+# So, it looks like I can't call this function from gitscraper.py for some reason.
+# Hypothesis: From the error: ValueError: signal only works in main thread, seems like
+# you can't reference an outside function that then references a different outside func.
 def digest_repo(repo_url, GProfile):
     r = gf.get_request('%s'%repo_url)
     if r.ok:
@@ -92,7 +93,10 @@ def update_output_div(n_clicks, input_value):
     if r.ok:
         item = json.loads(r.text or r.content)
         GP = get_features(item)
-        string = 'Pep8 errors for "{}" is {}, {}'.format(input_value, GP.pep8, GP.commits_per_time)
+        string = ('Stats for "{}"\n:'
+                  'pep8 errors: {}\n'
+                  'commits per time: {}\n'
+                  ).format(input_value, GP.pep8, GP.commits_per_time)
         return string
     else:
         return 'Couldnt get stats for "{}"'.format(input_value)
