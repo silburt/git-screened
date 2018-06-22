@@ -1,5 +1,5 @@
 from flask import Flask
 from application import views
 
-app = dash.Dash(__name__)
+app = Flask(__name__)
 server = app.server
