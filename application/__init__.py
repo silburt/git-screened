@@ -1,5 +1,7 @@
 from flask import Flask
-from application import views
 
 app = Flask(__name__)
-server = app.server
+app.secret_key = 'super secret key'
+app.config['SESSION_TYPE'] = 'filesystem'
+
+from application import views
