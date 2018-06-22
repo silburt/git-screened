@@ -131,5 +131,5 @@ def update_output_div(n_clicks, input_value):
         score = mod.classify_repo(GP)
         return output(input_value, GP, score)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug = True)
+#if __name__ == '__main__':
+#    app.run(host='0.0.0.0', debug = True)

@@ -10,9 +10,11 @@ import modeling as mod
 import json
 import pickle
 
-app = dash.Dash()
-my_css_url = "https://unpkg.com/normalize.css@5.0.0"
-app.css.append_css({"external_url": my_css_url})
+#app = dash.Dash()
+app = dash.Dash(__name__)
+server = app.server
+#my_css_url = "https://unpkg.com/normalize.css@5.0.0"
+#app.css.append_css({"external_url": my_css_url})
 
 app.layout = html.Div([
                        html.H1('git-screened', style={'font-style': 'Courier New',
@@ -130,4 +132,4 @@ def update_output_div(n_clicks, input_value):
         return output(input_value, GP, score)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug = True)
+    app.run_server(host='0.0.0.0', debug = True)

@@ -1,3 +1,3 @@
-from flask import Flask
-app = Flask(__name__)
-from application import views
+import dash
+app = dash.Dash(__name__)
+server = app.server
