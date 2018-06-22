@@ -135,4 +135,4 @@ def update_output_div(n_clicks, input_value):
 
 if __name__ == '__main__':
     #app.run_server(host='0.0.0.0', debug = True)
-    app.run_server(debug=True,use_reloader=False,port=5000,host='0.0.0.0')
+    app.run_server(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
