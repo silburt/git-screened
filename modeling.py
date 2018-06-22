@@ -68,8 +68,8 @@ def prepare_data(good_dir, bad_dir):
     return X, Xb
 
 # metric: try to maximize recall whilst including as few background samples as possible
-# ref: W. S. Lee and B. Liu, “Learning with positive and unlabeled examples
-# using weighted logistic regression,”
+# ref: W. S. Lee and B. Liu, 'Learning with positive and unlabeled examples
+# using weighted logistic regression'
 def focal_score(y_pred_test, y_pred_bkgnd, nu, gamma):
     # recall
     recall = len(np.where(y_pred_test == 1)[0])/float(len(y_pred_test))
