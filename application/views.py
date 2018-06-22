@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 import sys
-sys.path.append('../')
 import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
-import gitscraper as gs
-import gitfeatures as gf
-import modeling as mod
 import json
 import pickle
+
+import application.gitscraper as gs
+import application.gitfeatures as gf
+import application.modeling as mod
 
 app = dash.Dash()
 my_css_url = "https://unpkg.com/normalize.css@5.0.0"
