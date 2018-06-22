@@ -1,6 +1,4 @@
-# https://stackoverflow.com/questions/45736656/how-to-use-a-button-to-trigger-callback-updates
-# https://dash.plot.ly/dash-core-components/upload
-
+#!/usr/bin/env python
 import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
@@ -132,4 +130,4 @@ def update_output_div(n_clicks, input_value):
         return output(input_value, GP, score)
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run(host='0.0.0.0', debug = True)
