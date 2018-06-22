@@ -2,7 +2,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 import gitfeatures as gf
-import matplotlib.pyplot as plt
 import signal
 import numpy as np
 
