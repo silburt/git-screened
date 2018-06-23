@@ -8,11 +8,10 @@ import gitscraper as gs
 import gitfeatures as gf
 import modeling as mod
 import json
-import pickle
 
 app = dash.Dash()
 #app = dash.Dash(__name__)
-#server = app.server
+server = app.server
 #my_css_url = "https://unpkg.com/normalize.css@5.0.0"
 #app.css.append_css({"external_url": my_css_url})
 
@@ -135,4 +134,4 @@ def update_output_div(n_clicks, input_value):
 
 if __name__ == '__main__':
     #app.run_server(host='0.0.0.0', debug = True)
-    app.run_server(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
+    app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')

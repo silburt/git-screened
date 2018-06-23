@@ -6,21 +6,21 @@ from subprocess import call
 import os
 
 # base directory is from ./run.py
-auth = open('../keys_passwords/auth.txt').read()
-username, pw = auth.split()[0], auth.split()[1]
-authtoken = open('../keys_passwords/token.txt').read()
+#auth = open('../keys_passwords/auth.txt').read()
+#username, pw = auth.split()[0], auth.split()[1]
+#authtoken = open('../keys_passwords/token.txt').read()
 
 def get_request(url, timeout=10):
     r = None
     i = 0
     while r == None and i < 3:
         try:
-#            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
-#                             timeout=timeout)
+            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json"},
+                             timeout=timeout)
 
-            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json",
-                             "Authorization": "token %s"%authtoken},
-                             auth=HTTPBasicAuth(username, pw), timeout=timeout)
+#            r = requests.get(url, headers={"Accept":"application/vnd.github.mercy-preview+json",
+#                             "Authorization": "token %s"%authtoken},
+#                             auth=HTTPBasicAuth(username, pw), timeout=timeout)
         except:
             print('tried request %d, no success'%i)
         i += 1

@@ -16,7 +16,6 @@ class Github_Profile:
     def __init__(self, pckgs):
         self.user = ''
         self.url = ''
-        
         # metrics
         self.commit_history = []
         self.commits_per_time = 0
