@@ -3,43 +3,41 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.externals import joblib
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 train_features = ['code/files','comment/code','test/code','readme/code','docstring/code',
-                  'E1/code','E2/code','E3/code','E4/code','E5/code','E7/code',
+                  'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code','E7/code',
                   'W1/code','W2/code','W3/code','W6/code','code_lines']
 
-def make_features(df):
+def make_features(df, filter_bottom = False):
     df['code/files'] = df['code_lines']/df['n_pyfiles']
     df['comment/code'] = df['comment_lines']/df['code_lines']
     df['test/code'] = df['test_lines']/df['code_lines']
     df['readme/code'] = df['readme_lines']/df['code_lines']
     df['docstring/code'] = df['docstring_lines']/df['code_lines']
-    
-    try:
-        df['commits/code'] = df['n_commits']/df['code_lines']
-    except:
-        print('couldnt find n_commits')
-    
     for p in ['E1','E2','E3','E4','E5','E7','E9','W1','W2','W3','W5','W6']:
         df['%s/code'%p] = df[p]/df['code_lines']
-    return df.dropna(how='any').drop_duplicates()
 
-def load_data(good_dir, bad_dir):
-    good_names = ['url', 'n_pyfiles', 'code_lines', 'comment_lines', 'docstring_lines',
-                  'test_lines','readme_lines', 'n_commits', 'commits_per_time', 'n_stars',
-                  'n_forks', 'E1','E2','E3','E4','E5','E7','E9','W1','W2','W3','W5','W6']
-    df_good = pd.read_csv(good_dir, names=good_names)
-    df_good = make_features(df_good)
+    df = df.dropna(how='any').drop_duplicates()
+    if filter_bottom == True:
+        for f in ['code/files', 'comment/code', 'test/code',
+                  'readme/code', 'docstring/code']:
+            df = df[df[f] > 0]
 
-    bad_names = ['url', 'n_pyfiles', 'code_lines', 'comment_lines', 'docstring_lines',
-                 'test_lines','readme_lines','E1','E2','E3',
-                 'E4','E5','E7','E9','W1','W2','W3','W5','W6']
-    df_bad = pd.read_csv(bad_dir, names=bad_names)
-    df_bad = make_features(df_bad)
-    return df_good, df_bad
+    return df
+
+def load_data(dir):
+    fields = ['url', 'n_pyfiles', 'code_lines', 'comment_lines', 'docstring_lines',
+              'test_lines','readme_lines', 'n_commits', 'commits_per_time', 'n_stars',
+              'n_forks', 'E1','E2','E3','E4','E5','E7','E9','W1','W2','W3','W5','W6']
+    df = pd.read_csv(dir, names=fields)
+    df = make_features(df)
+    return df
 
 def prepare_data(good_dir, bad_dir):
-    df_good, df_bad = load_data(good_dir, bad_dir)
+    df_good = load_data(good_dir)
+    df_bad = load_data(bad_dir)
 
     # log data, really useful
     X = np.log10(df_good[train_features])
@@ -94,7 +92,7 @@ def random_train_test_split(X, train_frac = 0.8):
     X_train, X_test = X[train_i], X[test_i]
     return X_train, X_test
 
-def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.80):
+def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     # iterate over hypers, cv
     scores = []
     nu_best = 0
@@ -137,10 +135,28 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.80):
     print('best model is nu=%f, log10(gamma)=%f, score=%f'%(nu_best, loggamma_best, score_best))
     return scores, best
 
-def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-1.7.pkl'):
+def get_PCs(X, Xb):
+    pca = PCA(n_components = 2)
+    pca.fit(np.concatenate((X, Xb)))
+    pca_name = 'models/pca.pkl'
+    joblib.dump(pca, pca_name)
+    X_PC = pca.transform(X)
+    Xb_PC = pca.transform(Xb)
+
+    # plot
+    plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
+    plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks')
+    plt.xlabel('PC 1')
+    plt.ylabel('PC 2')
+    plt.title('explained variance: %.2f'%np.sum(pca.explained_variance_ratio_))
+    plt.legend()
+    plt.savefig('images/PCs.png')
+    return X_PC, Xb_PC
+
+def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-2.2.pkl'):
     # prepare data
     name_map = ['url', 'n_pyfiles', 'code_lines', 'comment_lines', 'docstring_lines',
-                'test_lines','readme_lines', 'n_commits', 'commits_per_time', 'n_stars',
+                'test_lines', 'readme_lines', 'n_commits', 'commits_per_time', 'n_stars',
                 'n_forks']
     pep8_map = ['E1','E2','E3','E4','E5','E7','E9','W1','W2','W3','W5','W6']
     data = {}
@@ -154,8 +170,8 @@ def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-1.7.pkl'):
 
     # prepare feature array
     scaler_name = 'models/scaler.pkl'
-    scaler = joblib.load(scaler_name)
     minvals_name = 'models/minvals.pkl'
+    scaler = joblib.load(scaler_name)
     minvals = joblib.load(minvals_name)
     X = np.log10(data[train_features])
     for c in X.columns:
@@ -173,7 +189,7 @@ def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-1.7.pkl'):
 if __name__ == '__main__':
     # directory info
     good_dir = 'repo_data/top_stars_stats_Python.txt'
-    bad_dir = 'repo_data/bottom_stars_stats_Python_local.txt'
+    bad_dir = 'repo_data/bottom_stars_stats_Python.txt'
     
     # train params
     nu = np.linspace(0.01, 1, 20)  # 0-1 range
@@ -183,5 +199,8 @@ if __name__ == '__main__':
     # prepare data
     X, Xb = prepare_data(good_dir, bad_dir)
     
+    # calculate PCs if desired
+    X_PC, Xb_PC = get_PCs(X, Xb)
+
     # train model
-    scores, best = train_model(X, Xb, nu, loggamma, n_cv)
+#    scores, best = train_model(X, Xb, nu, loggamma, n_cv)

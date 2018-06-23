@@ -77,12 +77,18 @@ def scrape_repo_readmes(repo_file, output_dir='readmes'):
 if __name__ == '__main__':
     #link = 'https://api.github.com/search/repositories?q=topic:%s+language:Python+sort:stars'%(t, i)
     #link = 'https://api.github.com/search/repositories?q=language:Python+stars:0+forks:0'%i
-    link = 'https://api.github.com/search/repositories?q=language:Python+sort:stars'
     
-    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:300..600',
-                  'https://api.github.com/search/repositories?q=language:Python+stars:600..1000',
-                  'https://api.github.com/search/repositories?q=language:Python+stars:1000..5000']
-    good_name = 'top_stars'
+    #link = 'https://api.github.com/search/repositories?q=language:Python+sort:stars'
+#    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:300..600',
+#                  'https://api.github.com/search/repositories?q=language:Python+stars:600..1000',
+#                  'https://api.github.com/search/repositories?q=language:Python+stars:1000..5000']
+#    good_name = 'top_stars'
+
+    link = 'https://api.github.com/search/repositories?q=language:Python+sort:forks'
+    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:130..190',
+                  'https://api.github.com/search/repositories?q=language:Python+stars:190..350',
+                  'https://api.github.com/search/repositories?q=language:Python+stars:350..50000']
+    good_name = 'top_forks'
     
     bad_links = ['https://api.github.com/search/repositories?q=language:Python+stars:0+forks:0',
                  'https://api.github.com/search/repositories?q=language:Python+stars:1+forks:0',

@@ -43,7 +43,6 @@ def get_metrics_per_file(item, GProfile, test_file):
         text = r.text
         
         # metrics
-        #gf.get_package_freq(text, GProfile)
         gf.get_comment_code_ratio(text, GProfile)
         gf.get_pep8_errs(text, GProfile)
         
@@ -130,11 +129,30 @@ def get_training_repos(repo_list_dir, output_dir):
             except:
                 print('skipping repo %s'%repo)
 
-if __name__ == '__main__':
-    repo_dir = 'repo_data/top_stars_repos_Python.txt'
-    output_dir = "repo_data/top_stars_stats_Python.txt"
+def scrape_single_repo(user_repo):
+    GP = Github_Profile([])
+    
+    repo = 'https://api.github.com/repos/%s'%user_repo
+    GP.user = repo.split('repos/')[1].split('/')[0]
+    r = gf.get_request(repo)
+    if r.ok:
+        item = json.loads(r.text or r.content)
+        signal.alarm(60)
+        try:
+            if item['fork'] == False:  # for now ignore forks
+                GP = get_features(item, GP)
+        except:
+            print('couldnt scrape %s'%repo)
+    return GP
 
-    get_training_repos(repo_dir, output_dir)
+if __name__ == '__main__':
+#    repo_dir = 'repo_data/top_stars_repos_Python.txt'
+#    output_dir = "repo_data/top_stars_stats_Python.txt"
+#    get_training_repos(repo_dir, output_dir)
+
+    user_repo = 'hannorein/rebound'
+    scrape_single_repo(user_repo)
+
 
 # scrape global stats about user
 #def scrape_by_user(git_user, packages, readme_dir='candidate'):

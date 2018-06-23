@@ -8,6 +8,7 @@ import gitscraper as gs
 import gitfeatures as gf
 import modeling as mod
 import json
+import pickle
 
 app = dash.Dash()
 #app = dash.Dash(__name__)
@@ -19,8 +20,9 @@ app.layout = html.Div([
                        html.H1('git-screened', style={'font-style': 'Courier New',
                                'font-size': 25, 'text-align': 'center'}),
                        html.Label('Repository Name (Format: user/repo)', style={'text-align': 'center'}),
-                       dcc.Input(id='repo', value='', type="text"),
+                       dcc.Input(value='', type='text', id='repo'),
                        html.Button('Search', id='button'),
+                       dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'on'}], values=[], id='metrics'),
                        html.Div(id='my-div', children='Enter a value and press Search'),
                        
 #                       dcc.Upload(
@@ -91,7 +93,7 @@ def get_features(item):
     return GP
 
 ####### Output Function
-def output(input_value, GP, score):
+def output(input_value, GP, score, metrics):
     if score == 1:
         outcome = 'PASS'
         color = 'green'
@@ -106,6 +108,7 @@ def output(input_value, GP, score):
                      html.H1('Results for Repository: "{}"'.format(input_value)),
                      html.Div([
                                html.H2('Status: {}'.format(outcome), style={'color':color}),
+                               html.H2('Metrics: {}'.format(metrics)),
                                html.Img(src=link)
                               ]),
 
@@ -114,24 +117,23 @@ def output(input_value, GP, score):
                                html.P('commits per time: {}'.format(GP.commits_per_time))
                                ]),
                     ])
-#elif score == -1:
-
 
 ####### Main App Callback
 @app.callback(
               Output(component_id='my-div', component_property='children'),
               [Input('button', 'n_clicks')],
-              state=[State(component_id='repo', component_property='value')])
-def update_output_div(n_clicks, input_value):
+              state=[State(component_id='repo', component_property='value'),
+                     State(component_id='metrics', component_property='values')])
+def update_output_div(n_clicks, input_value, metrics):
     r = gf.get_request('https://api.github.com/repos/%s'%input_value)
     if r.ok:
         item = json.loads(r.text or r.content)
         GP = get_features(item)
-#        with open('GP_TC.pkl', 'wb') as output_:
-#            pickle.dump(GP, output_)
+        with open('users_test/GP_%s.pkl'%item['name'], 'wb') as output_:
+            pickle.dump(GP, output_)
         score = mod.classify_repo(GP)
-        return output(input_value, GP, score)
+        return output(input_value, GP, score, metrics)
 
 if __name__ == '__main__':
-    #app.run_server(host='0.0.0.0', debug = True)
-    app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
+    app.run_server(host='0.0.0.0', debug = True)
+    #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
