@@ -63,10 +63,6 @@ def prepare_data(good_dir, bad_dir):
     Xb = scaler.transform(Xb)
     scaler_name = 'models/scaler.pkl'
     minvals_name = 'models/minvals.pkl'
-#    with open(scaler_name, 'wb') as output_:
-#        pickle.dump(scaler, output_)
-#    with open(minvals_name, 'wb') as output_:
-#        pickle.dump(minvals, output_)
     joblib.dump(scaler, scaler_name)
     joblib.dump(minvals, minvals_name)
     return X, Xb
@@ -136,8 +132,6 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.80):
 
     # write/save stuff
     clf_name = 'models/OC-SVM_n%.1f_logg%.1f.pkl'%(nu_best, loggamma_best)
-#    with open(clf_name, 'wb') as output_:
-#        pickle.dump(clf_best, output_)
     joblib.dump(clf_best, clf_name)
     best = [clf_best, nu_best, loggamma_best, score_best]
     print('best model is nu=%f, log10(gamma)=%f, score=%f'%(nu_best, loggamma_best, score_best))
@@ -163,10 +157,6 @@ def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-1.7.pkl'):
     scaler = joblib.load(scaler_name)
     minvals_name = 'models/minvals.pkl'
     minvals = joblib.load(minvals_name)
-#    with open(scaler_name, "rb") as input_file:
-#        scaler = pickle.load(input_file)
-#    with open(minvals_name, "rb") as input_file:
-#        minvals = pickle.load(input_file)
     X = np.log10(data[train_features])
     for c in X.columns:
         minval = minvals[c]
@@ -176,8 +166,6 @@ def classify_repo(GP, mdl_dir='models/OC-SVM_n0.1_logg-1.7.pkl'):
 
     # prepare model
     clf = joblib.load(mdl_dir)
-#    with open(mdl_dir, "rb") as input_file:
-#        clf = pickle.load(input_file)
 
     # generate pred
     return clf.predict(X)[0]
