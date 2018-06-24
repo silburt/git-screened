@@ -11,9 +11,11 @@ For each repository, the following features were generated:
 - *more features*
 
 A [One-Class SVM](http://scikit-learn.org/stable/auto_examples/svm/plot_oneclass.html) was then trained on the scraped repositories/features, using the positive and background classes. The following metric, M, was maximized, used by [Baldeck & Asner, 2015](https://ieeexplore.ieee.org/document/6891145/) and [Lee & Liu, 2003](https://www.aaai.org/Papers/ICML/2003/ICML03-060.pdf) was used to train the model:
+
 $$
 M = r^2 / f_b
 $$
+
 Where:
 -$r$ is the recall of the positive class.
 -$f_b$ is the fraction of the background samples classified as the positive class.
