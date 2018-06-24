@@ -23,7 +23,9 @@ app.layout = html.Div([
                        html.Label('Repository Name (Format: user/repo)', style={'text-align': 'center'}),
                        dcc.Input(value='', type='text', id='repo'),
                        html.Button('Search', id='button'),
-                       dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'on'}], values=[], id='metrics'),
+                       dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'metrics'},
+                                              {'label': 'Add Festive Meme', 'value': 'meme'}],
+                                     values=[], id='checklist'),
                        html.Div(id='my-div', children='Enter a value and press Search'),
                        
 #                       dcc.Upload(
@@ -94,7 +96,7 @@ def get_features(item):
     return GP
 
 ####### Output Function
-def output(input_value, GP, X, Xb, Xr, score, metrics):
+def output(input_value, GP, X, Xb, Xr, score, checklist):
     features = ['code/files','comment/code','test/code','readme/code','docstring/code',
                 'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code',
                 'E7/code','W1/code','W2/code','W3/code','W6/code','code_lines']
@@ -130,7 +132,7 @@ def output(input_value, GP, X, Xb, Xr, score, metrics):
                                  ),
                        html.Div([
                                  html.H2('Status: {}'.format(outcome), style={'color':color}),
-                                 html.H2('Metrics: {}'.format(metrics)),
+                                 html.H2('Checklist: {}'.format(checklist)),
                                  html.Img(src=link)
                                  ]),
                        
@@ -146,8 +148,8 @@ def output(input_value, GP, X, Xb, Xr, score, metrics):
               Output(component_id='my-div', component_property='children'),
               [Input('button', 'n_clicks')],
               state=[State(component_id='repo', component_property='value'),
-                     State(component_id='metrics', component_property='values')])
-def update_output_div(n_clicks, input_value, metrics):
+                     State(component_id='checklist', component_property='values')])
+def update_output_div(n_clicks, input_value, checklist):
     r = gf.get_request('https://api.github.com/repos/%s'%input_value)
     if r.ok:
         item = json.loads(r.text or r.content)
@@ -157,7 +159,7 @@ def update_output_div(n_clicks, input_value, metrics):
         score, Xr = mod.classify_repo(GP)
         X = np.load('models/X.npy')
         Xb = np.load('models/Xb.npy')
-        return output(input_value, GP, X, Xb, Xr, score, metrics)
+        return output(input_value, GP, X, Xb, Xr, score, checklist)
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug = True)

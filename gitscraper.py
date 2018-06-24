@@ -127,7 +127,7 @@ def get_training_repos(repo_list_dir, output_dir):
         if repo in proc_repos:
             print('already scanned %s'%repo)
             continue
-        GP = Github_Profile([])
+        GP = Github_Profile()
         GP.user = repo.split('repos/')[1].split('/')[0]
         r = gf.get_request(repo)
         if r.ok:
@@ -140,11 +140,11 @@ def get_training_repos(repo_list_dir, output_dir):
                     # write each repo->GP to file
                     string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
                     data = open(output_dir, 'a')
-                    data.write(string%(repo, GP.n_pyfiles, GP.code_lines, 
-                    				   GP.comment_lines, GP.docstring_lines, 
-                    				   GP.test_lines, GP.readme_lines, 
-                    				   GP.n_commits, GP.commits_per_time, 
-                    				   GP.n_stars, GP.n_forks))
+                    data.write(string%(repo, GP.n_pyfiles, GP.code_lines,
+                                       GP.comment_lines, GP.docstring_lines,
+                                       GP.test_lines, GP.readme_lines,
+                                       GP.n_commits, GP.commits_per_time,
+                                       GP.n_stars, GP.n_forks))
                     for key in GP.pep8.keys():
                         data.write(', %d'%GP.pep8[key])
                     data.write('\n')
@@ -176,12 +176,12 @@ def scrape_single_repo(user_repo):
     return GP
 
 if __name__ == '__main__':
-#    repo_dir = 'repo_data/top_stars_repos_Python.txt'
-#    output_dir = "repo_data/top_stars_stats_Python.txt"
-#    get_training_repos(repo_dir, output_dir)
+    repo_dir = 'repo_data/top_stars_repos_Python.txt'
+    output_dir = "repo_data/top_stars_stats_Python.txt"
+    get_training_repos(repo_dir, output_dir)
 
-    user_repo = 'hannorein/rebound'
-    scrape_single_repo(user_repo)
+#    user_repo = 'hannorein/rebound'
+#    scrape_single_repo(user_repo)
 
 
 
