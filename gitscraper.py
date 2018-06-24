@@ -1,3 +1,6 @@
+# Main function that physically scrapes all the features from each repository.
+# Calls gitfeatures.py which contains many of the individual features.
+
 import json
 import gitfeatures as gf
 import signal
