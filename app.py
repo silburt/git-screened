@@ -9,6 +9,7 @@ import gitfeatures as gf
 import modeling as mod
 import json
 import pickle
+import numpy as np
 
 app = dash.Dash()
 #app = dash.Dash(__name__)
@@ -73,7 +74,7 @@ def digest_repo(repo_url, GProfile):
                 print('%s timed out, skipping!'%item['download_url'])
 
 def get_features(item):
-    GP = gs.Github_Profile([])
+    GP = gs.Github_Profile()
     contents_url = '%s/contents'%item['url']
     
     # scrape commit history
@@ -93,7 +94,12 @@ def get_features(item):
     return GP
 
 ####### Output Function
-def output(input_value, GP, score, metrics):
+def output(input_value, GP, X, Xb, Xr, score, metrics):
+    features = ['code/files','comment/code','test/code','readme/code','docstring/code',
+                'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code',
+                'E7/code','W1/code','W2/code','W3/code','W6/code','code_lines']
+
+    # classification score
     if score == 1:
         outcome = 'PASS'
         color = 'green'
@@ -104,19 +110,36 @@ def output(input_value, GP, score, metrics):
         color = 'red'
         link = ('https://raw.githubusercontent.com/silburt/'
                 'git-screened/master/app_images/stormtrooper.jpg')
-    return html.Div([
-                     html.H1('Results for Repository: "{}"'.format(input_value)),
-                     html.Div([
-                               html.H2('Status: {}'.format(outcome), style={'color':color}),
-                               html.H2('Metrics: {}'.format(metrics)),
-                               html.Img(src=link)
-                              ]),
-
-                     html.Div([
-                               html.P('pep8 errors: {}'.format(GP.pep8)),
-                               html.P('commits per time: {}'.format(GP.commits_per_time))
-                               ]),
-                    ])
+    
+    dim = 2
+    div_output = html.Div([
+                       html.H1('Results for Repository: "{}"'.format(input_value)),
+                       dcc.Graph(
+                                 id='basic-interactions{}'.format(dim),
+                                 figure={
+                                 'data': [
+                                          {'x': X[:, dim], 'name': 'good', 'type': 'histogram'},
+                                          {'x': Xb[:, dim], 'name': 'bad', 'type': 'histogram'},
+                                          {
+                                          'x': X[:, dim][0]*np.ones(2),
+                                          'y': np.linspace(0,200, 2),
+                                          'name': input_value,
+                                          'line': {'width': 3,'dash': 'dot'}}],
+                                 'layout': {}
+                                 }
+                                 ),
+                       html.Div([
+                                 html.H2('Status: {}'.format(outcome), style={'color':color}),
+                                 html.H2('Metrics: {}'.format(metrics)),
+                                 html.Img(src=link)
+                                 ]),
+                       
+                       html.Div([
+                                 html.P('pep8 errors: {}'.format(GP.pep8)),
+                                 html.P('commits per time: {}'.format(GP.commits_per_time))
+                                 ]),
+                       ])
+    return div_output
 
 ####### Main App Callback
 @app.callback(
@@ -131,8 +154,10 @@ def update_output_div(n_clicks, input_value, metrics):
         GP = get_features(item)
         with open('users_test/GP_%s.pkl'%item['name'], 'wb') as output_:
             pickle.dump(GP, output_)
-        score = mod.classify_repo(GP)
-        return output(input_value, GP, score, metrics)
+        score, Xr = mod.classify_repo(GP)
+        X = np.load('models/X.npy')
+        Xb = np.load('models/Xb.npy')
+        return output(input_value, GP, X, Xb, Xr, score, metrics)
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug = True)

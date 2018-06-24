@@ -1,19 +1,22 @@
-import requests
-from requests.auth import HTTPBasicAuth
 import json
 import gitfeatures as gf
 import signal
 import numpy as np
 
+
 class TimeoutException(Exception):   # Custom exception class
     pass
+
 
 def timeout_handler(signum, frame):   # Custom signal handler
     raise TimeoutException
 
-# Class for each Github Profile
+
 class Github_Profile:
-    def __init__(self, pckgs):
+    """
+    Class containing the stats for each Github Profile
+    """
+    def __init__(self):
         self.user = ''
         self.url = ''
         # metrics
@@ -29,15 +32,23 @@ class Github_Profile:
         self.code_lines = 0
         self.n_pyfiles = 0
         self.pep8 = {}
-        a = ['E1','E2','E3','E4','E5','E7','E9','W1','W2','W3','W5','W6']
+        a = ['E1', 'E2', 'E3', 'E4', 'E5', 'E7',
+        'E9', 'W1', 'W2', 'W3', 'W5', 'W6']
         for p in a:
             self.pep8[p] = 0
-        
-        self.packages = {}
-        for p in pckgs:
-            self.packages[p] = 0
+        # self.packages = {}
+        # for p in pckgs:
+        #     self.packages[p] = 0
+
 
 def get_metrics_per_file(item, GProfile, test_file):
+    """
+    Extract metrics from each Python file:
+        -comment/code ratio
+        -pep8 errors
+        -number of code lines and test lines
+    """
+
     r = gf.get_request(item['download_url'])
     if r.ok:
         text = r.text
@@ -51,15 +62,21 @@ def get_metrics_per_file(item, GProfile, test_file):
         if test_file:
             GProfile.test_lines += code_len
 
-# recursive
+
 def digest_repo(repo_url, GProfile):
+    """
+        Look through each file and directory, extract metrics from
+        each python file. Recursive function.
+    """
+
     r = gf.get_request('%s'%repo_url)
     if r.ok:
         repoItems = json.loads(r.text or r.content)
         
         signal.signal(signal.SIGALRM, timeout_handler)
         for item in repoItems:
-            signal.alarm(10)
+            signal.alarm(10)	# skip file if takes more than 10 seconds
+
             try:
                 test_file = 0
                 if item['type'] == 'file' and item['name'][-3:] == '.py':
@@ -75,16 +92,16 @@ def digest_repo(repo_url, GProfile):
 
 def get_features(item, GP):
     contents_url = '%s/contents'%item['url']
-    
-    # scrape commit history
-    gf.get_repo_commit_history(item, GP)
-        
+
     # scrape readme
     gf.get_readme_length(contents_url, GP)
         
     # scrape file-by-file stats
     digest_repo(contents_url, GP)
             
+    # scrape commit history
+    gf.get_repo_commit_history(item, GP)
+
     # scrape stargazers
     GP.n_stars = item['stargazers_count']
             
@@ -94,6 +111,11 @@ def get_features(item, GP):
     return GP
 
 def get_training_repos(repo_list_dir, output_dir):
+    """
+    Top-level function that batch-extracts the statistics
+    from a collection of repositories.
+    """
+
     proc_repos = np.loadtxt(output_dir, delimiter=',', usecols=[0], dtype='str')
     repos = open(repo_list_dir, 'r').read().splitlines()
     # Change the behavior of SIGALRM
@@ -112,25 +134,30 @@ def get_training_repos(repo_list_dir, output_dir):
                 if item['fork'] == False:  # for now ignore forks
                     GP = get_features(item, GP)
 
-                    # save
+                    # write each repo->GP to file
                     string = '%s, %d, %d, %d, %d, %d, %d, %d, %f, %d, %d'
                     data = open(output_dir, 'a')
-                    data.write(string%(repo, GP.n_pyfiles, GP.code_lines, GP.comment_lines,
-                                       GP.docstring_lines, GP.test_lines,
-                                       GP.readme_lines, GP.n_commits, GP.commits_per_time,
-                                       GP.n_stars, GP.n_forks))
-                                       
+                    data.write(string%(repo, GP.n_pyfiles, GP.code_lines, 
+                    				   GP.comment_lines, GP.docstring_lines, 
+                    				   GP.test_lines, GP.readme_lines, 
+                    				   GP.n_commits, GP.commits_per_time, 
+                    				   GP.n_stars, GP.n_forks))
                     for key in GP.pep8.keys():
                         data.write(', %d'%GP.pep8[key])
                     data.write('\n')
                     data.close()
+
             except TimeoutException:
                 print('%s timed out, skipping!'%repo)
             except:
                 print('skipping repo %s'%repo)
 
 def scrape_single_repo(user_repo):
-    GP = Github_Profile([])
+    """
+    Top-level function that scrapes the statistics for a single
+    repository.
+    """
+    GP = Github_Profile()
     
     repo = 'https://api.github.com/repos/%s'%user_repo
     GP.user = repo.split('repos/')[1].split('/')[0]
@@ -153,6 +180,13 @@ if __name__ == '__main__':
     user_repo = 'hannorein/rebound'
     scrape_single_repo(user_repo)
 
+
+
+
+
+
+
+# Extra code #
 
 # scrape global stats about user
 #def scrape_by_user(git_user, packages, readme_dir='candidate'):

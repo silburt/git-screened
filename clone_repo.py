@@ -1,4 +1,7 @@
+# Small function that clones a repository directly from Github.
+
 from subprocess import call
+
 
 repos = open('repo_data/bottom_stars_repos_Python.txt','r').read().splitlines()
 for r in repos:
