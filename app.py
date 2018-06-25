@@ -20,16 +20,17 @@ app = dash.Dash(__name__, server=server)
 server = app.server
 
 #my_css_url = "https://unpkg.com/normalize.css@5.0.0"
-#app.css.append_css({"external_url": my_css_url})
+my_css_url = "https://codepen.io/chriddyp/pen/bWLwgP.css"
+app.css.append_css({"external_url": my_css_url})
 
 app.layout = html.Div([
                        html.H1('git-screened', style={'font-style': 'Courier New',
                                'font-size': 25, 'text-align': 'center'}),
-                       html.Label('Repository Name (Format: user/repo)', style={'text-align': 'center'}),
+                       html.H2('Repository Name (Format: user/repo)'),
                        dcc.Input(value='', type='text', id='repo'),
                        html.Button('Search', id='button'),
                        dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'metrics'},
-                                              {'label': 'Add Festive Meme', 'value': 'meme'}],
+                                              {'label': 'Festive Meme', 'value': 'meme'}],
                                      values=[], id='checklist'),
                        html.Div(id='my-div', children='Enter a value and press Search'),
                        
@@ -102,31 +103,34 @@ def get_features(item):
 
 ####### Output Functions #######
 def get_quality(pcnt): # Need to fix - for pep8 errors, more is worse...
-    print(pcnt)
     if pcnt < 10:
         return 'POOR', 'red'
     elif pcnt > 10 and pcnt < 30:
         return 'FAIR', 'orange'
     elif pcnt > 30 and pcnt < 50:
-        return 'GOOD', 'lime green'
+        return 'GOOD', 'limegreen'
     elif pcnt > 50:
         return 'GREAT', 'green'
 
-def output_feature(X, Xb, Xr, feat, repo_name, graph_flag=False):
+def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=False, nbins=30):
     features = ['code/files','comment/code','test/code','readme/code','docstring/code',
                 'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code',
                 'E7/code','W1/code','W2/code','W3/code','W6/code','code_lines']
     HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme', 'Docstring', 'Commits', 'Style']
-    pcnt = percentileofscore(X[:,feat], Xr[:,feat])
-    quality, color = get_quality(pcnt)
+    pcnt = percentileofscore(Xp[:,feat], Xr[:,feat])
+    if reverse_metric:  # e.g. for pep8 errors fewer is better
+        pcnt = 100 - pcnt
+    quality_label, color = get_quality(pcnt)
     if graph_flag:
-        return html.Div([html.H3('{} Quality is {}.'.format(HR_feature[feat], quality), style={'color':color}),
+        max_bin = np.max(np.histogram(Xp[:, feat], bins=nbins)[0])
+        return html.Div([html.H3('{} quality is {}.'.format(HR_feature[feat], quality_label), style={'color':color}),
                          dcc.Graph(
                          id='basic-interactions{}'.format(feat),
                          figure={
-                         'data': [{'x': X[:, feat], 'name': 'industry standard', 'type': 'histogram', 'histnorm':'probability'},
+                                'data': [
+                                         {'x': Xp[:, feat], 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
                                  #{'x': Xb[:, feat], 'name': 'bad', 'type': 'histogram', 'opacity':0.7},  # 0 star/fork results
-                                 {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, 0.1],
+                                 {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, max_bin],
                                  'name': repo_name, 'type': 'line', 'mode': 'lines', 'line': {'width': 5}}
                                  ],
                          'layout': {'title': '%.0fth percentile of industry standard repos'%pcnt,
@@ -134,10 +138,10 @@ def output_feature(X, Xb, Xr, feat, repo_name, graph_flag=False):
                                   'barmode':'overlay'}
                                })])
     else:
-        return html.Div([html.H3('{} Quality is {}'.format(HR_feature[feat], quality), style={'color':color})])
+        return html.Div([html.H3('{} Quality is {}'.format(HR_feature[feat], quality_label), style={'color':color})])
 
 
-def output(input_value, GP, X, Xb, Xr, score, checklist):
+def output(input_value, GP, Xr, score, checklist):
     # classification score
     meme = None
     if score == 1:
@@ -157,19 +161,21 @@ def output(input_value, GP, X, Xb, Xr, score, checklist):
     if 'metrics' in checklist:
         graph_flag = True
 
-    return html.Div([html.H1('Results for Repository: "{}"'.format(input_value)),
+    X_pos = np.load('models/X_pos.npy')
+    #X_neg = np.load('models/X_neg.npy')
+    return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                     html.Div([
                               html.H2('Status: {}'.format(outcome), style={'color':color}),
                               #html.H2('Checklist: {}'.format(checklist)),
                               html.Img(src=meme)
                               ]),
-                     output_feature(X, Xb, Xr, 0, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 1, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 2, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 3, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 4, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 5, input_value, graph_flag),
-                     output_feature(X, Xb, Xr, 6, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 0, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 1, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 2, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 3, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 4, input_value, graph_flag),
+                     #output_feature(X_pos, Xr, 5, input_value, graph_flag),
+                     output_feature(X_pos, Xr, 6, input_value, graph_flag, True),
                    ])
 
 ####### Main App Callback
@@ -180,7 +186,7 @@ def output(input_value, GP, X, Xb, Xr, score, checklist):
                      State(component_id='checklist', component_property='values')])
 def update_output_div(n_clicks, input_value, checklist):
     repo_path = 'saved_repo_profiles/GP_%s.pkl'%(input_value.replace('/','_'))
-    if os.path.isfile(repo_path):  # if profile already exists, don't rescrape
+    if os.path.isfile(repo_path):  # if profile already exists, don't re-scrape
         GP = joblib.load(repo_path)
     else:
         r = gf.get_request('https://api.github.com/repos/%s'%input_value)
@@ -188,15 +194,15 @@ def update_output_div(n_clicks, input_value, checklist):
             item = json.loads(r.text or r.content)
             GP = get_features(item)
             joblib.dump(GP, repo_path)
+        else:
+            return html.Div([html.H2('Couldnt find: "{}" on Github'.format(input_value))])
 
     score, Xr = mod.classify_repo(GP)
-    X = np.load('models/X.npy')
-    Xb = np.load('models/Xb.npy')
-    return output(input_value, GP, X, Xb, Xr, score, checklist)
+    return output(input_value, GP, Xr, score, checklist)
 
 if __name__ == '__main__':
     app.server.run(port=8000, host='0.0.0.0')
-    #app.run_server(host='0.0.0.0', debug=True)
+    #app.run_server(host='0.0.0.0', debug=True, port=8000)
     #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
 
 
