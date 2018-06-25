@@ -14,6 +14,7 @@ import numpy as np
 import os.path
 from scipy.stats import percentileofscore
 from sklearn.externals import joblib
+from textwrap import dedent
 
 server = flask.Flask(__name__)
 app = dash.Dash(__name__, server=server)
@@ -23,10 +24,22 @@ server = app.server
 my_css_url = "https://codepen.io/chriddyp/pen/bWLwgP.css"
 app.css.append_css({"external_url": my_css_url})
 
-app.layout = html.Div([
-                       html.H1('git-screened', style={'font-style': 'Courier New',
-                               'font-size': 25, 'text-align': 'center'}),
-                       html.H2('Repository Name (Format: user/repo)'),
+app.layout = html.Div([html.Div([
+                                 html.H3('git-screened', style={'font-family':'Courier New',
+                                         'background-color': '#CCE5FF', 'text-align':'center', 'font-size': 45}),
+                                 html.H3('Automating Github Repository Assessment', style={'font-size': 25,
+                                         'font-style':'italic', 'text-align':'center'}),
+                                 html.H3('By: Ari Silburt', style={'font-size': 20,
+                                         'font-style':'normal', 'text-align':'center'}),
+                                 dcc.Markdown(dedent('''
+                                    **Purpose**: ```git-screened``` is a tool that automatically scrapes summary statistics for an input Github repository and classifies it relative to the industry standard for good coding practices. By "industry standard", I mean the most popular Python repositories on Github by star count. This web-app is intended to assist those screening candidates (HR, hiring managers, etc.), and provide quick metrics to aid the process. This project was completed over the Summer 2018 [Insight Data Science](https://www.insightdatascience.com/) program. The code is publicly available on [Github](https://github.com/silburt/git-screened).
+                                    
+                                    **Instructions**: Enter a github repository in the search box before and click "search". A list of metrics summarizing the github repository will be output, along with an overall pass/fail classification for the overall coding proficiency of the repository.
+                                    
+                                    ------
+                                                ''')),
+                                 ], style={'background-color': 'WhiteSmoke'}),
+                       html.H2('Repository Name (Format: user/repository)', style={'font-size': 20, 'font-style':'normal'}),
                        dcc.Input(value='', type='text', id='repo'),
                        html.Button('Search', id='button'),
                        dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'metrics'},
@@ -56,7 +69,7 @@ app.layout = html.Div([
 #                       html.Div(id='output-data-upload'),
 #                       html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
                        
-                       ])
+                       ], style={})
 
 #######Scraping/Processing Functions
 # So, it looks like I can't call this function from gitscraper.py for some reason.
@@ -129,7 +142,6 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=Fal
                          figure={
                                 'data': [
                                          {'x': Xp[:, feat], 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
-                                 #{'x': Xb[:, feat], 'name': 'bad', 'type': 'histogram', 'opacity':0.7},  # 0 star/fork results
                                  {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, max_bin],
                                  'name': repo_name, 'type': 'line', 'mode': 'lines', 'line': {'width': 5}}
                                  ],
@@ -195,56 +207,11 @@ def update_output_div(n_clicks, input_value, checklist):
             GP = get_features(item)
             joblib.dump(GP, repo_path)
         else:
-            return html.Div([html.H2('Couldnt find: "{}" on Github'.format(input_value))])
+            return html.Div([html.H2('Couldnt find: "{}" on Github'.format(input_value),
+                                     style={'font-style':'normal', 'font-size':15})])
 
     score, Xr = mod.classify_repo(GP)
     return output(input_value, GP, Xr, score, checklist)
 
 if __name__ == '__main__':
     app.server.run(port=8000, host='0.0.0.0')
-    #app.run_server(host='0.0.0.0', debug=True, port=8000)
-    #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
-
-
-
-#### Extra Code #####
-
-#app = dash.Dash()
-#app.title = "git-screened"
-#server = app.server
-
-#        GP = pickle.load(open(repo_path, 'rb'))
-#            with open(repo_path, 'wb') as output_:
-#                pickle.dump(GP, output_)
-
-#                           dcc.Graph(
-#                                     id='basic-interactions{}'.format(dim),
-#                                     figure={
-#                                     'data': [go.Box(
-#                                                     x = X[:, dim],
-#                                                     y = ["A", "A", "A", "A"],
-#                                                     line = dict(color = 'gray'),
-#                                                     name = "A",
-#                                                     orientation = "h"
-#                                                     ),
-##                                              {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
-##                                              'name': input_value, 'type': 'line', 'mode': 'lines',
-##                                              'line': {'width': 5}}
-#                                              ],
-#                                     'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
-#                                     }
-#                                     ),
-
-#
-#'shapes':[{
-#          'type': 'line',
-#          'x0': 1,
-#          'y0': 0,
-#          'x1': 1,
-#          'y1': 1500,
-#          'name': input_value,
-#          'line': {
-#          'color': 'green',
-#          'width': 3,
-#          },
-#          }]
