@@ -11,8 +11,10 @@ import modeling as mod
 import json
 import pickle
 import numpy as np
+from scipy.stats import percentileofscore
 
 app = dash.Dash()
+app.title = "git-screened"
 #app = dash.Dash(__name__)
 server = app.server
 #my_css_url = "https://unpkg.com/normalize.css@5.0.0"
@@ -96,69 +98,76 @@ def get_features(item):
     GP.n_forks = item['forks_count']
     return GP
 
-####### Output Function
-def output(input_value, GP, X, Xb, Xr, score, checklist):
+####### Output Functions #######
+def get_quality(pcnt): # Need to fix - for pep8 errors, more is worse...
+    if pcnt < 0.1:
+        return 'POOR', 'red'
+    elif pcnt > 0.1 and pcnt < 0.3:
+        return 'FAIR', 'orange'
+    elif pcnt > 0.3 and pcnt < 0.5:
+        return 'GOOD', 'lime green'
+    elif pcnt > 0.5:
+        return 'GREAT', 'green'
+
+def output_feature(X, Xb, Xr, feat, repo_name, graph_flag=False):
     features = ['code/files','comment/code','test/code','readme/code','docstring/code',
                 'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code',
                 'E7/code','W1/code','W2/code','W3/code','W6/code','code_lines']
+    HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme', 'Docstring', 'Commits', 'Style']
+    pcnt = percentileofscore(X[:,feat], Xr[:,feat])
+    quality, color = get_quality(pcnt)
+    if graph_flag:
+        return html.Div([html.H3('{} Quality is {}.'.format(HR_feature[feat], quality), style={'color':color}),
+                         dcc.Graph(
+                         id='basic-interactions{}'.format(feat),
+                         figure={
+                         'data': [{'x': X[:, feat], 'name': 'industry standard', 'type': 'histogram', 'histnorm':'probability'},
+                                 #{'x': Xb[:, feat], 'name': 'bad', 'type': 'histogram', 'opacity':0.7},  # 0 star/fork results
+                                 {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, 0.1],
+                                 'name': repo_name, 'type': 'line', 'mode': 'lines', 'line': {'width': 5}}
+                                 ],
+                         'layout': {'title': '%.0fth percentile of industry standard repos'%pcnt,
+                                  'xaxis':dict(title='log10({})'.format(features[feat])),
+                                  'barmode':'overlay'}
+                               })])
+    else:
+        return html.Div([html.H3('{} Quality is {}'.format(HR_feature[feat], quality), style={'color':color})])
 
+
+def output(input_value, GP, X, Xb, Xr, score, checklist):
     # classification score
+    meme = None
     if score == 1:
         outcome = 'PASS'
         color = 'green'
-        link = ('https://raw.githubusercontent.com/silburt/'
-                'git-screened/master/app_images/happy_{}.jpg'.format(np.random.randint(1,5)))
+        if 'meme' in checklist:
+            meme = ('https://raw.githubusercontent.com/silburt/'
+                    'git-screened/master/app_images/happy_{}.jpg'.format(np.random.randint(1,5)))
     else:
         outcome = 'FAIL'
         color = 'red'
-        link = ('https://raw.githubusercontent.com/silburt/'
-                'git-screened/master/app_images/sad_{}.jpg'.format(np.random.randint(1,5)))
-    
-    dim = 2
-    div_output = html.Div([
-                       html.H1('Results for Repository: "{}"'.format(input_value)),
-#                           dcc.Graph(
-#                                     id='basic-interactions{}'.format(dim),
-#                                     figure={
-#                                     'data': [go.Box(
-#                                                     x = X[:, dim],
-#                                                     y = ["A", "A", "A", "A"],
-#                                                     line = dict(color = 'gray'),
-#                                                     name = "A",
-#                                                     orientation = "h"
-#                                                     ),
-##                                              {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
-##                                              'name': input_value, 'type': 'line', 'mode': 'lines',
-##                                              'line': {'width': 5}}
-#                                              ],
-#                                     'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
-#                                     }
-#                                     ),
+        if 'meme' in checklist:
+            meme = ('https://raw.githubusercontent.com/silburt/'
+                    'git-screened/master/app_images/sad_{}.jpg'.format(np.random.randint(1,5)))
 
-                       dcc.Graph(
-                                 id='basic-interactions{}'.format(dim),
-                                 figure={
-                                 'data': [{'x': X[:, dim], 'name': 'industry standard', 'type': 'histogram', 'histnorm':'probability'},
-#                                          {'x': Xb[:, dim], 'name': 'bad', 'type': 'histogram', 'opacity':0.7},
-                                          {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
-                                          'name': input_value, 'type': 'line', 'mode': 'lines',
-                                          'line': {'width': 5}}
-                                          ],
-                                 'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
-                                 }
-                                 ),
-                       html.Div([
-                                 html.H2('Status: {}'.format(outcome), style={'color':color}),
-                                 html.H2('Checklist: {}'.format(checklist)),
-                                 html.Img(src=link)
-                                 ]),
+    graph_flag = False
+    if 'metrics' in checklist:
+        graph_flag = True
 
-                       html.Div([
-                                 html.P('pep8 errors: {}'.format(GP.pep8)),
-                                 html.P('commits per time: {}'.format(GP.commits_per_time))
-                                 ]),
-                       ])
-    return div_output
+    return html.Div([html.H1('Results for Repository: "{}"'.format(input_value)),
+                    html.Div([
+                              html.H2('Status: {}'.format(outcome), style={'color':color}),
+                              #html.H2('Checklist: {}'.format(checklist)),
+                              html.Img(src=meme)
+                              ]),
+                     output_feature(X, Xb, Xr, 0, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 1, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 2, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 3, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 4, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 5, input_value, graph_flag),
+                     output_feature(X, Xb, Xr, 6, input_value, graph_flag),
+                   ])
 
 ####### Main App Callback
 @app.callback(
@@ -179,10 +188,28 @@ def update_output_div(n_clicks, input_value, checklist):
         return output(input_value, GP, X, Xb, Xr, score, checklist)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug = True)
+    app.run_server(host='0.0.0.0', debug=True)
     #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
 
 
+
+#                           dcc.Graph(
+#                                     id='basic-interactions{}'.format(dim),
+#                                     figure={
+#                                     'data': [go.Box(
+#                                                     x = X[:, dim],
+#                                                     y = ["A", "A", "A", "A"],
+#                                                     line = dict(color = 'gray'),
+#                                                     name = "A",
+#                                                     orientation = "h"
+#                                                     ),
+##                                              {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
+##                                              'name': input_value, 'type': 'line', 'mode': 'lines',
+##                                              'line': {'width': 5}}
+#                                              ],
+#                                     'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
+#                                     }
+#                                     ),
 
 #
 #'shapes':[{
