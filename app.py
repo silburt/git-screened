@@ -10,10 +10,11 @@ import gitscraper as gs
 import gitfeatures as gf
 import modeling as mod
 import json
-import pickle
+#import pickle
 import numpy as np
 import os.path
 from scipy.stats import percentileofscore
+from sklearn.externals import joblib
 
 #app = dash.Dash()
 #app.title = "git-screened"
@@ -185,14 +186,16 @@ def update_output_div(n_clicks, input_value, checklist):
     repo_path = 'saved_repo_profiles/GP_%s_%s.pkl'%(input_value.split('/')[0],
                                                     input_value.split('/')[1])
     if os.path.isfile(repo_path):
-        GP = pickle.load(repo_path)
+        GP = joblib.load(repo_path)
+#        GP = pickle.load(open(repo_path, 'rb'))
     else:
         r = gf.get_request('https://api.github.com/repos/%s'%input_value)
         if r.ok:
             item = json.loads(r.text or r.content)
             GP = get_features(item)
-            with open(repo_path, 'wb') as output_:
-                pickle.dump(GP, output_)
+            joblib.dump(GP, repo_path)
+#            with open(repo_path, 'wb') as output_:
+#                pickle.dump(GP, output_)
         score, Xr = mod.classify_repo(GP)
         X = np.load('models/X.npy')
         Xb = np.load('models/Xb.npy')
