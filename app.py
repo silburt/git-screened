@@ -102,13 +102,14 @@ def get_features(item):
 
 ####### Output Functions #######
 def get_quality(pcnt): # Need to fix - for pep8 errors, more is worse...
-    if pcnt < 0.1:
+    print(pcnt)
+    if pcnt < 10:
         return 'POOR', 'red'
-    elif pcnt > 0.1 and pcnt < 0.3:
+    elif pcnt > 10 and pcnt < 30:
         return 'FAIR', 'orange'
-    elif pcnt > 0.3 and pcnt < 0.5:
+    elif pcnt > 30 and pcnt < 50:
         return 'GOOD', 'lime green'
-    elif pcnt > 0.5:
+    elif pcnt > 50:
         return 'GREAT', 'green'
 
 def output_feature(X, Xb, Xr, feat, repo_name, graph_flag=False):
