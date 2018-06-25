@@ -12,6 +12,7 @@ import modeling as mod
 import json
 import pickle
 import numpy as np
+import os.path
 from scipy.stats import percentileofscore
 
 #app = dash.Dash()
@@ -181,12 +182,17 @@ def output(input_value, GP, X, Xb, Xr, score, checklist):
               state=[State(component_id='repo', component_property='value'),
                      State(component_id='checklist', component_property='values')])
 def update_output_div(n_clicks, input_value, checklist):
-    r = gf.get_request('https://api.github.com/repos/%s'%input_value)
-    if r.ok:
-        item = json.loads(r.text or r.content)
-        GP = get_features(item)
-        with open('users_test/GP_%s.pkl'%item['name'], 'wb') as output_:
-            pickle.dump(GP, output_)
+    repo_path = 'saved_repo_profiles/GP_%s_%s.pkl'%(input_value.split('/')[0],
+                                                    input_value.split('/')[1])
+    if os.path.isfile(repo_path):
+        GP = pickle.load(repo_path)
+    else:
+        r = gf.get_request('https://api.github.com/repos/%s'%input_value)
+        if r.ok:
+            item = json.loads(r.text or r.content)
+            GP = get_features(item)
+            with open(repo_path, 'wb') as output_:
+                pickle.dump(GP, output_)
         score, Xr = mod.classify_repo(GP)
         X = np.load('models/X.npy')
         Xb = np.load('models/Xb.npy')
