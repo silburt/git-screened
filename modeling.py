@@ -161,6 +161,14 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
                                gamma=10**loggamma_best)
     clf_best.fit(X_train)
 
+    # write positive/negative classes to file
+    y_X = clf_best.predict(X)
+    y_Xb = clf_best.predict(Xb)
+    X_pos = np.concatenate((X[y_X == 1], Xb[y_Xb == 1]))
+    X_neg = np.concatenate((X[y_X == -1], Xb[y_Xb == -1]))
+    np.save('models/X_pos.npy', X_pos)
+    np.save('models/X_neg.npy', X_neg)
+
     # write/save stuff
     clf_name = 'models/OC-SVM.pkl'
     joblib.dump(clf_best, clf_name)
