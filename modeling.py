@@ -4,7 +4,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 
 
 train_features = ['code/files', 'comment/code', 'test/code', 'readme/code',
@@ -170,7 +169,7 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     return scores, best
 
 
-def get_PCs(X, Xb):
+def get_PCs(X, Xb, plot=False):
     """
     Get and plot Principal Components (PCs) for Positive and Background data.
     """
@@ -182,13 +181,16 @@ def get_PCs(X, Xb):
     Xb_PC = pca.transform(Xb)
 
     # plot
-    plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
-    plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
-    plt.legend()
-    plt.savefig('images/PCs.png')
+    if plot:
+        import matplotlib.pyplot as plt
+        plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
+        plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
+        plt.xlabel('Principal Component 1')
+        plt.ylabel('Principal Component 2')
+        #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
+        plt.legend()
+        plt.savefig('images/PCs.png')
+    
     return X_PC, Xb_PC
 
 
