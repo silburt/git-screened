@@ -35,7 +35,7 @@ def make_features(df, filter_bottom=False):
     return df
 
 
-def load_data(dir):
+def load_data(dir, filter_bottom=False):
     """
     Load data from text file.
     """
@@ -44,7 +44,7 @@ def load_data(dir):
               'commits_per_time', 'n_stars', 'n_forks', 'E1', 'E2',
               'E3', 'E4', 'E5', 'E7', 'E9', 'W1', 'W2', 'W3', 'W5', 'W6']
     df = pd.read_csv(dir, names=fields)
-    df = make_features(df)
+    df = make_features(df, filter_bottom)
     return df
 
 
@@ -52,7 +52,7 @@ def prepare_data(good_dir, bad_dir):
     """
     Preprocess, take log, fill in missing values, standardize.
     """
-    df_good = load_data(good_dir)
+    df_good = load_data(good_dir, filter_bottom=True)
     df_bad = load_data(bad_dir)
 
     # log data, really useful feature
@@ -163,7 +163,7 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     clf_best.fit(X_train)
 
     # write/save stuff
-    clf_name = 'models/OC-SVM_n%.1f_logg%.1f.pkl' % (nu_best, loggamma_best)
+    clf_name = 'models/OC-SVM.pkl'
     joblib.dump(clf_best, clf_name)
     best = [clf_best, nu_best, loggamma_best, score_best]
     print('best model is nu=%f, log10(gamma)=%f, score=%f' % (nu_best, loggamma_best, score_best))
@@ -183,16 +183,16 @@ def get_PCs(X, Xb):
 
     # plot
     plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
-    plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks')
-    plt.xlabel('PC 1')
-    plt.ylabel('PC 2')
-    plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
+    plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
     plt.legend()
     plt.savefig('images/PCs.png')
     return X_PC, Xb_PC
 
 
-def classify_repo(GP, mdl_file='models/OC-SVM_n0.1_logg-2.2.pkl'):
+def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
     """
     Predict class of scraped repo using pre-trained One-Class SVM model.
     """

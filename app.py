@@ -3,6 +3,7 @@ import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 import dash_table_experiments as dt
 import gitscraper as gs
 import gitfeatures as gf
@@ -106,28 +107,44 @@ def output(input_value, GP, X, Xb, Xr, score, checklist):
         outcome = 'PASS'
         color = 'green'
         link = ('https://raw.githubusercontent.com/silburt/'
-                'git-screened/master/app_images/baby.jpg')
+                'git-screened/master/app_images/happy_{}.jpg'.format(np.random.randint(1,5)))
     else:
         outcome = 'FAIL'
         color = 'red'
         link = ('https://raw.githubusercontent.com/silburt/'
-                'git-screened/master/app_images/stormtrooper.jpg')
+                'git-screened/master/app_images/sad_{}.jpg'.format(np.random.randint(1,5)))
     
     dim = 2
     div_output = html.Div([
                        html.H1('Results for Repository: "{}"'.format(input_value)),
+#                           dcc.Graph(
+#                                     id='basic-interactions{}'.format(dim),
+#                                     figure={
+#                                     'data': [go.Box(
+#                                                     x = X[:, dim],
+#                                                     y = ["A", "A", "A", "A"],
+#                                                     line = dict(color = 'gray'),
+#                                                     name = "A",
+#                                                     orientation = "h"
+#                                                     ),
+##                                              {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
+##                                              'name': input_value, 'type': 'line', 'mode': 'lines',
+##                                              'line': {'width': 5}}
+#                                              ],
+#                                     'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
+#                                     }
+#                                     ),
+
                        dcc.Graph(
                                  id='basic-interactions{}'.format(dim),
                                  figure={
-                                 'data': [
-                                          {'x': X[:, dim], 'name': 'good', 'type': 'histogram'},
-                                          {'x': Xb[:, dim], 'name': 'bad', 'type': 'histogram'},
-                                          {
-                                          'x': X[:, dim][0]*np.ones(2),
-                                          'y': np.linspace(0,200, 2),
-                                          'name': input_value,
-                                          'line': {'width': 3,'dash': 'dot'}}],
-                                 'layout': {}
+                                 'data': [{'x': X[:, dim], 'name': 'industry standard', 'type': 'histogram', 'histnorm':'probability'},
+#                                          {'x': Xb[:, dim], 'name': 'bad', 'type': 'histogram', 'opacity':0.7},
+                                          {'x': Xr[:, dim][0]*np.ones(2), 'y':[0, 0.5],
+                                          'name': input_value, 'type': 'line', 'mode': 'lines',
+                                          'line': {'width': 5}}
+                                          ],
+                                 'layout': {'title':features[dim], 'xaxis':dict(title='Value'), 'barmode':'overlay'}
                                  }
                                  ),
                        html.Div([
@@ -135,7 +152,7 @@ def output(input_value, GP, X, Xb, Xr, score, checklist):
                                  html.H2('Checklist: {}'.format(checklist)),
                                  html.Img(src=link)
                                  ]),
-                       
+
                        html.Div([
                                  html.P('pep8 errors: {}'.format(GP.pep8)),
                                  html.P('commits per time: {}'.format(GP.commits_per_time))
@@ -164,3 +181,19 @@ def update_output_div(n_clicks, input_value, checklist):
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug = True)
     #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
+
+
+
+#
+#'shapes':[{
+#          'type': 'line',
+#          'x0': 1,
+#          'y0': 0,
+#          'x1': 1,
+#          'y1': 1500,
+#          'name': input_value,
+#          'line': {
+#          'color': 'green',
+#          'width': 3,
+#          },
+#          }]
