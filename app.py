@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import dash
+import flask
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
@@ -13,10 +14,14 @@ import pickle
 import numpy as np
 from scipy.stats import percentileofscore
 
-app = dash.Dash()
-app.title = "git-screened"
-#app = dash.Dash(__name__)
+#app = dash.Dash()
+#app.title = "git-screened"
+#server = app.server
+
+server = flask.Flask(__name__)
+app = dash.Dash(__name__, server=server)
 server = app.server
+
 #my_css_url = "https://unpkg.com/normalize.css@5.0.0"
 #app.css.append_css({"external_url": my_css_url})
 
@@ -188,7 +193,8 @@ def update_output_div(n_clicks, input_value, checklist):
         return output(input_value, GP, X, Xb, Xr, score, checklist)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True)
+    app.server.run(port=8000, host='0.0.0.0')
+    #app.run_server(host='0.0.0.0', debug=True)
     #app.run(debug=True, use_reloader=False, port=5000, host='0.0.0.0')
 
 
