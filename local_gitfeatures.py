@@ -8,7 +8,6 @@ import glob
 
 def get_readme_length(repo, GProfile):
     readme = glob.glob('%s/README*'%repo)
-    #print(readme, len(readme))
     if len(readme) >= 1:
         try:
             text = open(readme[0], 'r', encoding='utf-8').read()
@@ -20,27 +19,24 @@ def get_readme_length(repo, GProfile):
 
 # get frequency of comments vs. code
 def get_comment_code_ratio(text, GProfile):
-    print("HI")
     for sym_s, sym_e in [('#','\n')]:
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         comm_len = 0
-        while start != -1:
+        while start != -1 and end != -1:
             comm_len += len(text[start: end].split('\n'))
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
 
-    print("HI2")
     for sym_s, sym_e in [('"""', '"""')]:
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         doc_len = 0
-        while start != -1:
+        while start != -1 and end != -1:
             doc_len += len(text[start: end].split('\n'))
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
 
-    print("HI3")
     GProfile.comment_lines += comm_len
     GProfile.docstring_lines += doc_len
 
