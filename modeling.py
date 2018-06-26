@@ -219,6 +219,7 @@ def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
     for n in pep8_map:
         data[n] = GP.pep8[n]
     data = make_features(pd.DataFrame.from_dict([data]))
+    print(data)
 
     # prepare features, preprocess.
     scaler_name = 'models/scaler.pkl'
