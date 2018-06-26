@@ -7,9 +7,9 @@ from sklearn.decomposition import PCA
 
 
 train_features = ['code/files', 'comment/code', 'test/code', 'readme/code',
-                  'docstring/code', 'commits_per_time', 'E1/code', 'E2/code',
-                  'E3/code', 'E4/code', 'E5/code', 'E7/code', 'W1/code',
-                  'W2/code', 'W3/code', 'W6/code', 'code_lines']
+                  'docstring/code', 'E1/code', 'E2/code', 'E3/code',
+                  'E4/code', 'E5/code', 'E7/code', 'W1/code', 'W2/code',
+                  'W3/code', 'W6/code', 'code_lines']
 
 
 def make_features(df, filter_bottom=False):
@@ -72,17 +72,17 @@ def prepare_data(good_dir, bad_dir):
     # standardize
     scaler = StandardScaler()
     scaler.fit(pd.concat([X, Xb], axis=0))  # scale over X+Xb data together!
-    X = scaler.transform(X)
-    Xb = scaler.transform(Xb)
+    X_s = scaler.transform(X)   # scaled
+    Xb_s = scaler.transform(Xb)  # scaled
     scaler_name = 'models/scaler.pkl'
     minvals_name = 'models/minvals.pkl'
     joblib.dump(scaler, scaler_name)
     joblib.dump(minvals, minvals_name)
 
     # save as arrays
-    np.save('models/X.npy', X)
-    np.save('models/Xb.npy', Xb)
-    return X, Xb
+    np.save('models/X.npy', X_s)
+    np.save('models/Xb.npy', Xb_s)
+    return X_s, Xb_s, X, Xb
 
 
 def focal_score(y_pred_test, y_pred_bkgnd, nu, gamma):
@@ -121,7 +121,7 @@ def random_train_test_split(X, train_frac=0.8):
     return X_train, X_test
 
 
-def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
+def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     """
     Train model using "focal_score()" metric, subject to
     recall > recall_thresh constraint.
@@ -135,8 +135,8 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
         for g in loggamma:
             sc, rc, bg = [], [], []
             for i in range(n_cv):
-                X_train, X_test = random_train_test_split(X)
-                Xb_train, Xb_test = random_train_test_split(Xb)
+                X_train, X_test = random_train_test_split(X_s)
+                Xb_train, Xb_test = random_train_test_split(Xb_s)
 
                 clf = svm.OneClassSVM(kernel='rbf', nu=n, gamma=10**g)
                 clf.fit(X_train)
@@ -162,12 +162,12 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     clf_best.fit(X_train)
 
     # write positive/negative classes to file
-    y_X = clf_best.predict(X)
-    y_Xb = clf_best.predict(Xb)
-    X_pos = np.concatenate((X[y_X == 1], Xb[y_Xb == 1]))
-    X_neg = np.concatenate((X[y_X == -1], Xb[y_Xb == -1]))
-    np.save('models/X_pos.npy', X_pos)
-    np.save('models/X_neg.npy', X_neg)
+    y_X = clf_best.predict(X_s)
+    y_Xb = clf_best.predict(Xb_s)
+    X_pos = np.concatenate((X[y_X == 1], Xb[y_Xb == 1]))  # unscaled
+    X_neg = np.concatenate((X[y_X == -1], Xb[y_Xb == -1]))  # unscaled
+    np.save('models/X_pos_unscaled.npy', X_pos)
+    np.save('models/X_neg_unscaled.npy', X_neg)
 
     # write/save stuff
     clf_name = 'models/OC-SVM.pkl'
@@ -177,16 +177,16 @@ def train_model(X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     return scores, best
 
 
-def get_PCs(X, Xb, plot=False):
+def get_PCs(X_s, Xb_s, plot=False):
     """
     Get and plot Principal Components (PCs) for Positive and Background data.
     """
     pca = PCA(n_components=2)
-    pca.fit(np.concatenate((X, Xb)))
+    pca.fit(np.concatenate((X_s, Xb_s)))
     pca_name = 'models/pca.pkl'
     joblib.dump(pca, pca_name)
-    X_PC = pca.transform(X)
-    Xb_PC = pca.transform(Xb)
+    X_PC = pca.transform(X_s)
+    Xb_PC = pca.transform(Xb_s)
 
     # plot
     if plot:
@@ -230,14 +230,13 @@ def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
         minval = minvals[c]
         X.loc[X[c] == -np.inf, c] = minval
         X.loc[X[c] == np.inf, c] = minval
-    X = scaler.transform(X)
 
     # prepare model
     clf = joblib.load(mdl_file)
-    repo_pred = clf.predict(X)[0]
+    repo_pred = clf.predict(scaler.transform(X))[0]
 
-    # generate pred
-    return repo_pred, X
+    # generate pred, X is kept unscaled for plotting!
+    return repo_pred, X.values
 
 
 if __name__ == '__main__':
@@ -251,10 +250,10 @@ if __name__ == '__main__':
     n_cv = 3
 
     # prepare data
-    X, Xb = prepare_data(good_dir, bad_dir)
+    X_s, Xb_s, X, Xb = prepare_data(good_dir, bad_dir)
 
     # calculate PCs if desired
-    X_PC, Xb_PC = get_PCs(X, Xb)
+    X_PC, Xb_PC = get_PCs(X_s, Xb_s)
 
     # train model
-    scores, best = train_model(X, Xb, nu, loggamma, n_cv)
+    scores, best = train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv)
