@@ -122,16 +122,28 @@ def get_quality(pcnt): # Need to fix - for pep8 errors, more is worse...
     elif pcnt > 50:
         return 'GREAT', 'green'
 
-def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=False, nbins=30):
-    features = ['code/files', 'comment/code', 'test/code', 'readme/code',
-                'docstring/code', 'E1/code', 'E2/code', 'E3/code',
-                'E4/code', 'E5/code', 'E7/code', 'W1/code', 'W2/code',
-                'W3/code', 'W6/code', 'code_lines']
-    HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme', 'Docstring', 'Style']
-    pcnt = percentileofscore(Xp[:,feat], Xr[:,feat])
-    if reverse_metric:  # e.g. for pep8 errors fewer is better
-        pcnt = 100 - pcnt
-    quality_label, color = get_quality(pcnt)
+def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, pep8=False, nbins=30):
+    features = ['code/files', 'comment/code lines', 'test/code lines', 'readme/code lines',
+                'docstring/code lines', 'pep8 errors/code lines']
+    HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme',
+                  'Docstring', 'pep8 Error (more=worse)']
+    
+    if pep8: # e.g. for pep8 errors fewer is better
+        Xr_ = 0
+        Xp_ = 0
+        for i in range(feat, feat + 10):
+            Xr_ += 10**Xr[:, i]
+            Xp_ += 10**Xp[:, i]
+        pcnt = percentileofscore(np.log10(Xp_), np.log10(Xr_))
+        pl_P = Xp_
+        pl_R = Xr_
+        quality_label, color = get_quality(100 - pcnt)
+    else:
+        pcnt = percentileofscore(Xp[:,feat], Xr[:,feat])
+        pl_P = Xp[:,feat]
+        pl_R = Xr[:,feat]
+        quality_label, color = get_quality(pcnt)
+
     if graph_flag:
         max_bin = np.max(np.histogram(Xp[:, feat], bins=nbins)[0])
         return html.Div([html.H3('{} quality is {}.'.format(HR_feature[feat], quality_label), style={'color':color}),
@@ -139,8 +151,8 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=Fal
                          id='basic-interactions{}'.format(feat),
                          figure={
                                 'data': [
-                                         {'x': Xp[:, feat], 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
-                                 {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, max_bin],
+                                         {'x': pl_P, 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
+                                 {'x': pl_R[0]*np.ones(2), 'y':[0, max_bin],
                                  'name': repo_name, 'type': 'line', 'mode': 'lines', 'line': {'width': 5}}
                                  ],
                          'layout': {'title': '%.0fth percentile of industry standard repos'%pcnt,

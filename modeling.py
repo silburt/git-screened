@@ -188,8 +188,8 @@ def get_PCs(X_s, Xb_s, plot=False):
     X_PC = pca.transform(X_s)
     Xb_PC = pca.transform(Xb_s)
 
-    # plot
     if plot:
+        # Plot data in PC1 vs. PC2 space
         import matplotlib.pyplot as plt
         plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
         plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
@@ -198,6 +198,9 @@ def get_PCs(X_s, Xb_s, plot=False):
         #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
         plt.legend()
         plt.savefig('images/PCs.png')
+    
+        # Plot Feature importances as a heatmap
+        
     
     return X_PC, Xb_PC
 
