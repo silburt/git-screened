@@ -60,7 +60,7 @@ def get_comment_code_ratio(text, GProfile):
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         comm_len = 0
-        while start != -1:
+        while start != -1 and end != -1:
             comm_len += len(text[start: end].split('\n'))
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
@@ -69,7 +69,7 @@ def get_comment_code_ratio(text, GProfile):
         start = text.find(sym_s)
         end = text.find(sym_e, start + 1)
         doc_len = 0
-        while start != -1:
+        while start != -1 and end != -1:
             doc_len += len(text[start: end].split('\n'))
             start = text.find(sym_s, end + 1)
             end = text.find(sym_e, start + 1)
