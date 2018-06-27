@@ -192,8 +192,8 @@ def get_PCs(X_s, Xb_s, plot=False):
         # Plot data in PC1 vs. PC2 space
         import matplotlib.pyplot as plt
         plt.figure(figsize=(8, 6))
-        plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
-        plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
+        plt.plot(X_PC[:, 0], X_PC[:, 1], '.', color='green', label='200+ stars (positive class)')
+        plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', color='orange', label='0 stars (background class)', alpha=0.6)
         plt.xlabel('Principal Component 1', fontsize=20)
         plt.ylabel('Principal Component 2', fontsize=20)
         #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
