@@ -269,7 +269,7 @@ if __name__ == '__main__':
     X_s, Xb_s, X, Xb = prepare_data(good_dir, bad_dir)
 
     # calculate PCs if desired
-    X_PC, Xb_PC = get_PCs(X_s, Xb_s, True)
+    X_PC, Xb_PC = get_PCs(X_s, Xb_s)
 
     # train model
     scores, best = train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv)
