@@ -135,7 +135,7 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, pep8=False, nbins=
             Xr_ += 10**Xr[:, i]
             Xp_ += 10**Xp[:, i]
         pcnt = percentileofscore(np.log10(Xp_), np.log10(Xr_))
-        pl_P = Xp_
+        pl_P = Xp_[Xp_ <= 1.2]
         pl_R = Xr_
         quality_label, color = get_quality(100 - pcnt)
     else:

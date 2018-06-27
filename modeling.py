@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 train_features = ['code/files', 'comment/code', 'test/code', 'readme/code',
                   'docstring/code', 'E1/code', 'E2/code', 'E3/code',
                   'E4/code', 'E5/code', 'E7/code', 'W1/code', 'W2/code',
-                  'W3/code', 'W6/code', 'code_lines']
+                  'W3/code', 'W6/code']
 
 
 def make_features(df, filter_bottom=False):
@@ -191,16 +191,29 @@ def get_PCs(X_s, Xb_s, plot=False):
     if plot:
         # Plot data in PC1 vs. PC2 space
         import matplotlib.pyplot as plt
+        plt.figure(figsize=(8, 6))
         plt.plot(X_PC[:, 0], X_PC[:, 1], '.', label='200+ stars')
         plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', label='0 stars/forks', alpha=0.6)
-        plt.xlabel('Principal Component 1')
-        plt.ylabel('Principal Component 2')
+        plt.xlabel('Principal Component 1', fontsize=20)
+        plt.ylabel('Principal Component 2', fontsize=20)
         #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
         plt.legend()
         plt.savefig('images/PCs.png')
     
-        # Plot Feature importances as a heatmap
-        
+        # Plot Feature importances as bar graph
+        ind = np.arange(len(train_features))    # the x locations for the groups
+        width = 0.35                            # the width of the bars
+        fig, ax = plt.subplots(figsize=(8, 6))
+        pltPC1 = ax.bar(ind, np.abs(pca.components_[0]), width, color='r')
+        pltPC2 = ax.bar(ind + width, np.abs(pca.components_[1]), width, color='y')
+        ax.set_ylabel('PC Weights', fontsize=20)
+        ax.set_xticks(ind + width / 2)
+        ax.set_xticklabels(([x.replace('/code', '') for x in train_features]),
+                           rotation=90, fontsize=20)
+        ax.legend((pltPC1[0], pltPC2[0]), ('PC1', 'PC2'))
+        plt.gcf().subplots_adjust(bottom=0.25)
+        plt.savefig('images/feat_importances.png')
+        #print(pd.DataFrame(pca.components_.T, columns=['PC-1','PC-2'], index=train_features))
     
     return X_PC, Xb_PC
 
@@ -256,7 +269,7 @@ if __name__ == '__main__':
     X_s, Xb_s, X, Xb = prepare_data(good_dir, bad_dir)
 
     # calculate PCs if desired
-    X_PC, Xb_PC = get_PCs(X_s, Xb_s)
+    X_PC, Xb_PC = get_PCs(X_s, Xb_s, True)
 
     # train model
     scores, best = train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv)
