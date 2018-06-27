@@ -34,7 +34,7 @@ app.layout = html.Div([html.Div([
                                  dcc.Markdown(dedent('''
                                     **Purpose**: ```git-screened``` is a tool that automatically scrapes summary statistics for an input Github repository and classifies it relative to the industry standard for good coding practices. By "industry standard", I mean the most popular Python repositories on Github by star count. This web-app is intended to assist those screening candidates (HR, hiring managers, etc.), and provide quick metrics to aid the process. This project was completed over the Summer 2018 [Insight Data Science](https://www.insightdatascience.com/) program. The code is publicly available on [Github](https://github.com/silburt/git-screened).
                                     
-                                    **Instructions**: Enter a github repository in the search box below and click "search". A list of metrics summarizing the github repository will be output, along with an overall pass/fail classification for the overall coding proficiency of the repository. The option to output detailed metrics and a festive meme is also available by checking the boxes before clicking "search". 
+                                    **Instructions**: Enter a github repository in the search box below and click "search". A list of metrics summarizing the github repository will be output, along with an overall pass/fail classification for the overall production-level code quality of the repository. The option to output detailed metrics and a festive meme is also available. 
                                     
                                     ------
                                                 ''')),
