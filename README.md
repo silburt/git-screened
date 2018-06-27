@@ -12,13 +12,11 @@ For each repository, the following features were generated:
 
 A [One-Class SVM](http://scikit-learn.org/stable/auto_examples/svm/plot_oneclass.html) was then trained on the scraped repositories/features, using the positive and background classes. The following metric, M, was maximized, used by [Baldeck & Asner, 2015](https://ieeexplore.ieee.org/document/6891145/) and [Lee & Liu, 2003](https://www.aaai.org/Papers/ICML/2003/ICML03-060.pdf) was used to train the model:
 
-$$
-M = r^2 / f_b
-$$
+$$ M = r^2 / f_b $$
 
 Where:
--$r$ is the recall of the positive class.
--$f_b$ is the fraction of the background samples classified as the positive class.
+- $r$ is the recall of the positive class.
+- $f_b$ is the fraction of the background samples classified as the positive class.
 
 In addition, a constraint of $r > 85\%$ is added, preventing solutions of low recall from being found, which would go against the intuition that most highly starred repositories are of production-grade quality. 
 
