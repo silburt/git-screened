@@ -81,18 +81,15 @@ def digest_repo(repo_url, GProfile):
         repoItems = json.loads(r.text or r.content)
 
         for item in repoItems:
-            try:
-                test_file = 0
-                if item['type'] == 'file' and item['name'][-3:] == '.py':
-                    GProfile.n_pyfiles += 1
-                    if 'test' in item['name'].lower(): # pytest
-                        test_file = 1
-                    print(item['download_url'])
-                    gs.get_metrics_per_file(item, GProfile, test_file)
-                elif item['type'] == 'dir':
-                    digest_repo(item['url'], GProfile)
-            except:
-                print('%s timed out, skipping!'%item['download_url'])
+#            try:
+            if item['type'] == 'file' and item['name'][-3:] == '.py':
+                GProfile.n_pyfiles += 1
+                print(item['download_url'])
+                gs.get_metrics_per_file(item, GProfile)
+            elif item['type'] == 'dir':
+                digest_repo(item['url'], GProfile)
+#            except:
+#                print('%s timed out, skipping!'%item['download_url'])
 
 def get_features(item):
     GP = gs.Github_Profile()
@@ -125,15 +122,28 @@ def get_quality(pcnt): # Need to fix - for pep8 errors, more is worse...
     elif pcnt > 50:
         return 'GREAT', 'green'
 
-def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=False, nbins=30):
-    features = ['code/files','comment/code','test/code','readme/code','docstring/code',
-                'commits_per_time','E1/code','E2/code','E3/code','E4/code','E5/code',
-                'E7/code','W1/code','W2/code','W3/code','W6/code','code_lines']
-    HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme', 'Docstring', 'Commits', 'Style']
-    pcnt = percentileofscore(Xp[:,feat], Xr[:,feat])
-    if reverse_metric:  # e.g. for pep8 errors fewer is better
-        pcnt = 100 - pcnt
-    quality_label, color = get_quality(pcnt)
+def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, pep8=False, nbins=30):
+    features = ['code/files', 'comment/code lines', 'test/code lines', 'readme/code lines',
+                'docstring/code lines', 'pep8 errors/code lines']
+    HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme',
+                  'Docstring', 'pep8 Error (more=worse)']
+    
+    if pep8: # e.g. for pep8 errors fewer is better
+        Xr_ = 0
+        Xp_ = 0
+        for i in range(feat, feat + 10):
+            Xr_ += 10**Xr[:, i]
+            Xp_ += 10**Xp[:, i]
+        pcnt = percentileofscore(np.log10(Xp_), np.log10(Xr_))
+        pl_P = Xp_[Xp_ <= 1.2]
+        pl_R = Xr_
+        quality_label, color = get_quality(100 - pcnt)
+    else:
+        pcnt = percentileofscore(Xp[:,feat], Xr[:,feat])
+        pl_P = Xp[:,feat]
+        pl_R = Xr[:,feat]
+        quality_label, color = get_quality(pcnt)
+
     if graph_flag:
         max_bin = np.max(np.histogram(Xp[:, feat], bins=nbins)[0])
         return html.Div([html.H3('{} quality is {}.'.format(HR_feature[feat], quality_label), style={'color':color}),
@@ -141,8 +151,8 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, reverse_metric=Fal
                          id='basic-interactions{}'.format(feat),
                          figure={
                                 'data': [
-                                         {'x': Xp[:, feat], 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
-                                 {'x': Xr[:, feat][0]*np.ones(2), 'y':[0, max_bin],
+                                         {'x': pl_P, 'nbinsx':nbins ,'name': 'industry standard', 'type': 'histogram'},#, 'histnorm':'probability'},
+                                 {'x': pl_R[0]*np.ones(2), 'y':[0, max_bin],
                                  'name': repo_name, 'type': 'line', 'mode': 'lines', 'line': {'width': 5}}
                                  ],
                          'layout': {'title': '%.0fth percentile of industry standard repos'%pcnt,
@@ -173,7 +183,7 @@ def output(input_value, GP, Xr, score, checklist):
     if 'metrics' in checklist:
         graph_flag = True
 
-    X_pos = np.load('models/X_pos.npy')
+    X_pos = np.load('models/X_pos_unscaled.npy')
     #X_neg = np.load('models/X_neg.npy')
     return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                     html.Div([
@@ -186,8 +196,7 @@ def output(input_value, GP, Xr, score, checklist):
                      output_feature(X_pos, Xr, 2, input_value, graph_flag),
                      output_feature(X_pos, Xr, 3, input_value, graph_flag),
                      output_feature(X_pos, Xr, 4, input_value, graph_flag),
-                     #output_feature(X_pos, Xr, 5, input_value, graph_flag),
-                     output_feature(X_pos, Xr, 6, input_value, graph_flag, True),
+                     output_feature(X_pos, Xr, 5, input_value, graph_flag, True),
                    ])
 
 ####### Main App Callback
@@ -210,7 +219,7 @@ def update_output_div(n_clicks, input_value, checklist):
             return html.Div([html.H2('Couldnt find: "{}" on Github'.format(input_value),
                                      style={'font-style':'normal', 'font-size':15})])
 
-    score, Xr = mod.classify_repo(GP)
+    score, Xr = mod.classify_repo(GP)  #r for repo
     return output(input_value, GP, Xr, score, checklist)
 
 if __name__ == '__main__':

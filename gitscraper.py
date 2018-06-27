@@ -44,7 +44,7 @@ class Github_Profile:
         #     self.packages[p] = 0
 
 
-def get_metrics_per_file(item, GProfile, test_file):
+def get_metrics_per_file(item, GProfile):
     """
     Extract metrics from each Python file:
         -comment/code ratio
@@ -62,7 +62,9 @@ def get_metrics_per_file(item, GProfile, test_file):
         
         code_len = len(text.split('\n'))
         GProfile.code_lines += code_len
-        if test_file:
+        
+        # tests
+        if item['name'].lower()[:5] == 'test_' and 'assert' in text: # pytest
             GProfile.test_lines += code_len
 
 
@@ -81,13 +83,10 @@ def digest_repo(repo_url, GProfile):
             signal.alarm(10)	# skip file if takes more than 10 seconds
 
             try:
-                test_file = 0
                 if item['type'] == 'file' and item['name'][-3:] == '.py':
                     GProfile.n_pyfiles += 1
-                    if 'test' in item['name'].lower(): # pytest
-                        test_file = 1
                     print(item['download_url'])
-                    get_metrics_per_file(item, GProfile, test_file)
+                    get_metrics_per_file(item, GProfile)
                 elif item['type'] == 'dir':
                     digest_repo(item['url'], GProfile)
             except TimeoutException:
