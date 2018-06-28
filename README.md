@@ -15,14 +15,14 @@ For each repository, the following features were generated (all except the last 
 
 A [One-Class SVM](http://scikit-learn.org/stable/auto_examples/svm/plot_oneclass.html) was then trained on the positive and background class, using ```r*r/b``` as the metric to be maximized, where ```r``` is the recall of the positive class and ```b``` is the fraction of background samples classified as the positive class. This metric is a popular choice for the One-Class SVM, being used by, e.g. [Baldeck & Asner, 2015](https://ieeexplore.ieee.org/document/6891145/) and [Lee & Liu, 2003](https://www.aaai.org/Papers/ICML/2003/ICML03-060.pdf).
 
-In addition, a constraint of $r > 85\%$ is added to prevent solutions of low positive-class recall, consistent with the intuition that highly starred repositories are of production-grade quality. 
+In addition, a constraint of ```r``` > 85% is added to prevent solutions of low positive-class recall, consistent with the intuition that highly starred repositories are of production-grade quality. 
 
 ### Usage
 Below is a basic explanation of each python file:
-- ```app.py``` - Contains the frontend website, hosted on AWS at [git-screened.icu](http://git-screened.icu/).
--```gitfeatures.py``` - Holds most of the backend functions to scrape repositories using the Github API and generate features for each repository.
--```gitscraper.py``` - Contains the top level functions that scrape repositories using the Github API and generate the features, storing the stats in csv files in repo_data/. 
--```modeling.py``` - Contains the code for pre-processing the scraped data and training the One-Class SVM model. 
--```scrape_repo_apicalls.py``` - Initial function that scrapes Github repository API calls based off desired criteria (e.g. number of stars, coding language, etc.).
+- ```app.py``` - Contains the frontend website, hosted on AWS at [git-screened.icu](http://git-screened.icu/).   
+-```gitfeatures.py``` - Holds most of the backend functions to scrape repositories using the Github API and generate features for each repository.    
+-```gitscraper.py``` - Contains the top level functions that scrape repositories using the Github API and generate the features, storing the stats in csv files in repo_data/.   
+-```modeling.py``` - Contains the code for pre-processing the scraped data and training the One-Class SVM model.    
+-```scrape_repo_apicalls.py``` - Initial function that scrapes Github repository API calls based off desired criteria (e.g. number of stars, coding language, etc.).   
 
 
