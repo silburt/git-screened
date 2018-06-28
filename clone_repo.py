@@ -2,7 +2,7 @@
 import os
 from subprocess import call
 
-stars = 'top'
+stars = 'bottom'
 
 repos = open('repo_data/%s_stars_repos_Python.txt'%stars,'r').read().splitlines()
 for r in repos:
