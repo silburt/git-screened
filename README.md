@@ -1,3 +1,10 @@
+---
+title: "git-screened"
+output:
+github_document:
+pandoc_args: --webtex
+---
+
 ## ```git-screened``` - Automating Github Repository Assessment.
 ### By: Ari Silburt
 ```git-screened``` is a [web-app](http://git-screened.icu/) that automatically scrapes summary statistics for an input Github repository, and classifies it relative to the "industry standard". By industry standard, I mean the most popular Python repositories on Github by star count. This web-app is intended to assist those screening candidates (i.e. HR, hiring managers, etc.) by providing a quick assessment of production-level code quality. This project was completed over the Summer 2018 [Insight Data Science](https://www.insightdatascience.com/) program.
