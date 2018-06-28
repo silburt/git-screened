@@ -4,6 +4,7 @@ import json
 import local_gitfeatures as gf
 import matplotlib.pyplot as plt
 import signal
+import numpy as np
 import glob
 
 class TimeoutException(Exception):   # Custom exception class
@@ -62,12 +63,15 @@ def digest_repo(file, GProfile):
         print('%s timed out, skipping!'%file)
 
 def get_features(repo_dir, output_dir):
+    proc_repos = np.loadtxt(output_dir, delimiter=',', usecols=[0], dtype='str')
     repos = glob.glob('%s/*'%repo_dir)
     
     # Change the behavior of SIGALRM
     signal.signal(signal.SIGALRM, timeout_handler)
     for repo in repos:
-        print(repo)
+        if repo in proc_repos:
+            print('already scanned %s'%repo)
+            continue
         GP = Github_Profile()
         # scrape readme
         gf.get_readme_length(repo, GP)
