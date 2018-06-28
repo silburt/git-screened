@@ -121,7 +121,7 @@ def random_train_test_split(X, train_frac=0.8):
     return X_train, X_test
 
 
-def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
+def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.8):
     """
     Train model using "focal_score()" metric, subject to
     recall > recall_thresh constraint.
@@ -131,6 +131,7 @@ def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     nu_best = 0
     loggamma_best = 0
     score_best = 0
+    recall_best = 0
     for n in nu:
         for g in loggamma:
             sc, rc, bg = [], [], []
@@ -153,6 +154,7 @@ def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
             if (meansc > score_best) and (meanrc > recall_thresh):
                 nu_best = n
                 loggamma_best = g
+                recall_best = meanrc
                 score_best = meansc
             scores.append([n, g, meansc, meanrc, meanbg])
 
@@ -173,7 +175,8 @@ def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.85):
     clf_name = 'models/OC-SVM.pkl'
     joblib.dump(clf_best, clf_name)
     best = [clf_best, nu_best, loggamma_best, score_best]
-    print('best model is nu=%f, log10(gamma)=%f, score=%f' % (nu_best, loggamma_best, score_best))
+    print(('best model is nu=%f, log10(gamma)=%f, recall=%f, score=%f')
+          % (nu_best, loggamma_best, recall_best, score_best))
     return scores, best
 
 
