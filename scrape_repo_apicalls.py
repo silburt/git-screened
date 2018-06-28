@@ -35,10 +35,10 @@ if __name__ == '__main__':
 #                  'https://api.github.com/search/repositories?q=language:Python+stars:1000..5000']
 #    good_name = 'top_stars'
 
-    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:240..300',
-                  'https://api.github.com/search/repositories?q=language:Python+stars:200..240',
-                  'https://api.github.com/search/repositories?q=language:Python+stars:170..200']
-    good_name = 'top_stars2'
+#    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:240..300',
+#                  'https://api.github.com/search/repositories?q=language:Python+stars:200..240',
+#                  'https://api.github.com/search/repositories?q=language:Python+stars:170..200']
+#    good_name = 'top_stars2'
 
 #    link = 'https://api.github.com/search/repositories?q=language:Python+sort:forks'
 #    good_links = ['https://api.github.com/search/repositories?q=language:Python+stars:130..190',
@@ -51,5 +51,10 @@ if __name__ == '__main__':
 #                 'https://api.github.com/search/repositories?q=language:Python+stars:0+forks:1']
 #    bad_name = 'bottom_stars'
 
-    scrape_repos_by_specs(good_name, good_links)
-    #scrape_repos_by_specs(bad_name, bad_links)
+    bad_links = ['https://api.github.com/search/repositories?q=language:Python+stars:1+forks:0+created:<2018-01-01+created:>2017-01-01',
+                 'https://api.github.com/search/repositories?q=language:Python+stars:1+forks:0+created:<2017-01-01+created:>2016-01-01',
+                 'https://api.github.com/search/repositories?q=language:Python+stars:1+forks:0+created:<2016-01-01+created:>2015-01-01']
+    bad_name = 'bottom_stars_created2'
+
+    #scrape_repos_by_specs(good_name, good_links)
+    scrape_repos_by_specs(bad_name, bad_links)
