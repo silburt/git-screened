@@ -1,10 +1,3 @@
----
-title: "git-screened"
-output:
-github_document:
-pandoc_args: --webtex
----
-
 ## ```git-screened``` - Automating Github Repository Assessment.
 ### By: Ari Silburt
 ```git-screened``` is a [web-app](http://git-screened.icu/) that automatically scrapes summary statistics for an input Github repository, and classifies it relative to the "industry standard". By industry standard, I mean the most popular Python repositories on Github by star count. This web-app is intended to assist those screening candidates (i.e. HR, hiring managers, etc.) by providing a quick assessment of production-level code quality. This project was completed over the Summer 2018 [Insight Data Science](https://www.insightdatascience.com/) program.
@@ -19,7 +12,7 @@ For each repository, the following features were generated:
 
 A [One-Class SVM](http://scikit-learn.org/stable/auto_examples/svm/plot_oneclass.html) was then trained on the scraped repositories/features, using the positive and background classes. The following metric, M, was maximized, used by [Baldeck & Asner, 2015](https://ieeexplore.ieee.org/document/6891145/) and [Lee & Liu, 2003](https://www.aaai.org/Papers/ICML/2003/ICML03-060.pdf) was used to train the model:
 
-$ M = r^2 / f_b $
+\( M = r^2 / f_b \)
 
 Where:  
 - $r$ is the recall of the positive class.
