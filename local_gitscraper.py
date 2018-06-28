@@ -100,7 +100,7 @@ def get_features(repo_dir, output_dir):
         data.close()
 
 if __name__ == '__main__':
-    repotype = 'bottom'
+    repotype = 'top'
     repo_dir = 'clone_repo_%s/'%repotype
     output_dir = 'repo_data/%s_stars_stats_Python_FULL.txt'%repotype
     get_features(repo_dir, output_dir)
