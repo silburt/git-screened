@@ -20,9 +20,9 @@ In addition, a constraint of ```r``` > 85% is added to prevent solutions of low 
 ### Usage
 Below is a basic explanation of each python file:
 - ```app.py``` - Contains the frontend website, hosted on AWS at [git-screened.icu](http://git-screened.icu/).   
--```gitfeatures.py``` - Holds most of the backend functions to scrape repositories using the Github API and generate features for each repository.    
--```gitscraper.py``` - Contains the top level functions that scrape repositories using the Github API and generate the features, storing the stats in csv files in repo_data/.   
--```modeling.py``` - Contains the code for pre-processing the scraped data and training the One-Class SVM model.    
--```scrape_repo_apicalls.py``` - Initial function that scrapes Github repository API calls based off desired criteria (e.g. number of stars, coding language, etc.).   
+- ```gitfeatures.py``` - Holds most of the backend functions to scrape repositories using the Github API and generate features for each repository.    
+- ```gitscraper.py``` - Contains the top level functions that scrape repositories using the Github API and generate the features, storing the stats in csv files in repo_data/.   
+- ```modeling.py``` - Contains the code for pre-processing the scraped data and training the One-Class SVM model.    
+- ```scrape_repo_apicalls.py``` - Initial function that scrapes Github repository API calls based off desired criteria (e.g. number of stars, coding language, etc.).   
 
 
