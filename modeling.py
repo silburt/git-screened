@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.decomposition import PCA
+from sklearn import svm
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 
 
 train_features = ['code/files', 'comment/code', 'test/code', 'readme/code',
@@ -85,7 +88,22 @@ def prepare_data(good_dir, bad_dir):
     return X_s, Xb_s, X, Xb
 
 
-def focal_score(y_pred_test, y_pred_bkgnd, nu, gamma):
+def random_train_test_split(X, train_frac=0.8):
+    """
+        Randomly shuffle the data, split into Test/Train.
+        Useful for Cross Validation.
+        """
+    N = len(X)
+    rN = np.arange(0, N)
+    np.random.shuffle(rN)  # randomly shuffle data
+    train_i = rN[0: int(train_frac * N)]
+    test_i = rN[int(train_frac * N):]
+    
+    X_train, X_test = X[train_i], X[test_i]
+    return X_train, X_test
+
+
+def focal_score(y_pred_test, y_pred_bkgnd, hyper1_, hyper2_):
     """
     metric: Try to maximize recall whilst including as few background
     samples as possible. Ref: W. S. Lee and B. Liu, 'Learning with positive
@@ -101,66 +119,68 @@ def focal_score(y_pred_test, y_pred_bkgnd, nu, gamma):
         score = recall**2 / bckgnd_focal_frac
     except ZeroDivisionError:
         print(("recall=%f, background_focal_frac=%f,"
-               "nu=%f, gamma=%f") % (recall, bckgnd_focal_frac, nu, gamma))
+               "hyper1=%f, hyper2=%f") % (recall, bckgnd_focal_frac, hyper1_, hyper2_))
         score = 0
     return score, recall, bckgnd_focal_frac
 
 
-def random_train_test_split(X, train_frac=0.8):
-    """
-    Randomly shuffle the data, split into Test/Train.
-    Useful for Cross Validation. 
-    """
-    N = len(X)
-    rN = np.arange(0, N)
-    np.random.shuffle(rN)  # randomly shuffle data
-    train_i = rN[0: int(train_frac * N)]
-    test_i = rN[int(train_frac * N):]
+def build_model(type='OC-SVM', hyper1_, hyper2_):
+    # elliptic envelope
+    if type == 'ElipEnv':
+        return EllipticEnvelope(contamination=hyper1_)
+    # isolation forest
+    elif type == 'IsoForest':
+        return IsolationForest(contamination=hyper1_,
+                               max_samples=hyper2_)
+    # local outlier factor
+    elif type == 'LOF':
+        return LocalOutlierFactor(contamination=hyper1_,
+                                  n_neighbors=hyper2_)
+    # default is one-class svm
+    else:
+        return svm.OneClassSVM(kernel='rbf', nu=hyper1_,
+                               gamma=10**hyper2_)
 
-    X_train, X_test = X[train_i], X[test_i]
-    return X_train, X_test
 
-
-def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.8):
+def train_model(X_s, Xb_s, X, Xb, model_type, hyper1, hyper2, n_cv=3, recall_thresh=0.8):
     """
     Train model using "focal_score()" metric, subject to
     recall > recall_thresh constraint.
     """
     # iterate over hypers, cv
     scores = []
-    nu_best = 0
-    loggamma_best = 0
+    hyper1_best = 0
+    hyper2_best = 0
     score_best = 0
     recall_best = 0
-    for n in nu:
-        for g in loggamma:
+    for h1 in hyper1:
+        for h2 in hyper2:
             sc, rc, bg = [], [], []
             for i in range(n_cv):
                 X_train, X_test = random_train_test_split(X_s)
                 Xb_train, Xb_test = random_train_test_split(Xb_s)
 
-                clf = svm.OneClassSVM(kernel='rbf', nu=n, gamma=10**g)
+                clf = build_model(model_type, h1, h2)
                 clf.fit(X_train)
                 y_pred_test = clf.predict(X_test)
                 y_pred_bkgnd = clf.predict(Xb_train)
-                score_, recall_, bkgnd_ = focal_score(y_pred_test, y_pred_bkgnd, n, g)
-                sc.append(score_)
-                rc.append(recall_)
-                bg.append(bkgnd_)
+                sc_, rc_, bg_ = focal_score(y_pred_test, y_pred_bkgnd, h1, h2)
+                sc.append(sc_)
+                rc.append(rc_)
+                bg.append(bg_)
 
             meansc = np.mean(sc)
             meanrc = np.mean(rc)
             meanbg = np.mean(bg)
             if (meansc > score_best) and (meanrc > recall_thresh):
-                nu_best = n
-                loggamma_best = g
+                hyper1_best = h1
+                hyper2_best = h2
                 recall_best = meanrc
                 score_best = meansc
-            scores.append([n, g, meansc, meanrc, meanbg])
+            scores.append([h1, h2, meansc, meanrc, meanbg])
 
     # train best model
-    clf_best = svm.OneClassSVM(kernel='rbf', nu=nu_best,
-                               gamma=10**loggamma_best)
+    clf_best = build_model(model_type, hyper1_best, hyper2_best)
     clf_best.fit(X_train)
 
     # write positive/negative classes to file
@@ -168,15 +188,15 @@ def train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv=3, recall_thresh=0.8):
     y_Xb = clf_best.predict(Xb_s)
     X_pos = np.concatenate((X[y_X == 1], Xb[y_Xb == 1]))  # unscaled
     X_neg = np.concatenate((X[y_X == -1], Xb[y_Xb == -1]))  # unscaled
-    np.save('models/X_pos_unscaled.npy', X_pos)
-    np.save('models/X_neg_unscaled.npy', X_neg)
+    np.save('models/X_pos_unscaled_%s.npy'%model_type, X_pos)
+    np.save('models/X_neg_unscaled_%s.npy'%model_type, X_neg)
 
     # write/save stuff
-    clf_name = 'models/OC-SVM.pkl'
+    clf_name = 'models/%s.pkl'%model_type
     joblib.dump(clf_best, clf_name)
-    best = [clf_best, nu_best, loggamma_best, score_best]
-    print(('best model is nu=%f, log10(gamma)=%f, recall=%f, score=%f')
-          % (nu_best, loggamma_best, recall_best, score_best))
+    best = [clf_best, hyper1_best, hyper2_best, score_best]
+    print(('best model is hyper1=%f, hyper2=%f, recall=%f, score=%f')
+          % (hyper1_best, hyper2_best, recall_best, score_best))
     return scores, best
 
 
