@@ -42,10 +42,15 @@ def load_data(dir, filter_bottom=False):
     """
     Load data from text file.
     """
-    fields = ['url', 'n_pyfiles', 'code_lines', 'comment_lines',
-              'docstring_lines', 'test_lines', 'readme_lines', 'n_commits',
-              'commits_per_time', 'n_stars', 'n_forks', 'E1', 'E2',
-              'E3', 'E4', 'E5', 'E7', 'E9', 'W1', 'W2', 'W3', 'W5', 'W6']
+    if "FULL" in dir:
+        fields = ['url', 'n_pyfiles', 'code_lines', 'comment_lines',
+                  'docstring_lines', 'test_lines', 'readme_lines', 'E1', 'E2',
+                  'E3', 'E4', 'E5', 'E7', 'E9', 'W1', 'W2', 'W3', 'W5', 'W6']
+    else:
+        fields = ['url', 'n_pyfiles', 'code_lines', 'comment_lines',
+                  'docstring_lines', 'test_lines', 'readme_lines', 'n_commits',
+                  'commits_per_time', 'n_stars', 'n_forks', 'E1', 'E2',
+                  'E3', 'E4', 'E5', 'E7', 'E9', 'W1', 'W2', 'W3', 'W5', 'W6']
     df = pd.read_csv(dir, names=fields)
     df = make_features(df, filter_bottom)
     return df
@@ -298,8 +303,9 @@ if __name__ == '__main__':
     bad_dir = 'repo_data/bottom_stars_stats_Python.txt'
 
     # params
-    N_hyper = 5     # hyper coarse-ness
+    N_hyper = 10     # hyper coarse-ness
     plot = False    # output plots
+    dummy = [1]     # dummy needed for some models to populate field
 
     # prepare data
     X_s, Xb_s, X, Xb = prepare_data(good_dir, bad_dir)
@@ -311,7 +317,6 @@ if __name__ == '__main__':
     print('training One-Class SVM')
     nu = np.linspace(0.01, 1, N_hyper)  # 0-1 range
     logg = np.linspace(-4, 0, N_hyper)  # log(gamma)
-    dummy = [1]
     scoresO, bestO = train_model(X_s, Xb_s, X, Xb, 'OC-SVM',
                                  nu, logg, dummy)
 
@@ -319,7 +324,6 @@ if __name__ == '__main__':
     print('Isolation Forest')
     contamination = np.linspace(0.01, 1, N_hyper)
     max_samples = np.linspace(0.2, 1, N_hyper)
-    dummy = [1]
     scoresI, bestI = train_model(X_s, Xb_s, X, Xb, 'IsoForest',
                                  contamination, max_samples, dummy)
 
