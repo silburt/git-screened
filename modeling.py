@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+import itertools
 
 
 train_features = ['code/files', 'comment/code', 'test/code', 'readme/code',
@@ -103,7 +104,7 @@ def random_train_test_split(X, train_frac=0.8):
     return X_train, X_test
 
 
-def focal_score(y_pred_test, y_pred_bkgnd, hyper1_, hyper2_):
+def focal_score(y_pred_test, y_pred_bkgnd, h1, h2, h3):
     """
     metric: Try to maximize recall whilst including as few background
     samples as possible. Ref: W. S. Lee and B. Liu, 'Learning with positive
@@ -118,70 +119,83 @@ def focal_score(y_pred_test, y_pred_bkgnd, hyper1_, hyper2_):
     try:
         score = recall**2 / bckgnd_focal_frac
     except ZeroDivisionError:
-        print(("recall=%f, background_focal_frac=%f,"
-               "hyper1=%f, hyper2=%f") % (recall, bckgnd_focal_frac, hyper1_, hyper2_))
+        print("recall=%f, bckgnd_focal_frac=%f, h1=%f, h2=%f, h3=%f" %
+              (recall, bckgnd_focal_frac, h1, h2, h3))
         score = 0
     return score, recall, bckgnd_focal_frac
 
 
-def build_model(type='OC-SVM', hyper1_, hyper2_):
-    # elliptic envelope
-    if type == 'ElipEnv':
-        return EllipticEnvelope(contamination=hyper1_)
-    # isolation forest
-    elif type == 'IsoForest':
+def initialize_model(type, hyper1_, hyper2_, hyper3_):
+    if type == 'IsoForest':    # isolation forest
         return IsolationForest(contamination=hyper1_,
-                               max_samples=hyper2_)
-    # local outlier factor
-    elif type == 'LOF':
-        return LocalOutlierFactor(contamination=hyper1_,
-                                  n_neighbors=hyper2_)
-    # default is one-class svm
-    else:
-        return svm.OneClassSVM(kernel='rbf', nu=hyper1_,
+                               max_samples=hyper2_,
+                               n_estimators=200)
+    elif type == 'BiasedSVM':  # biased svm
+        return svm.SVC(C=10**hyper1_,  # inverse regularization
+                       gamma=10**hyper2_,
+                       class_weight={-1:1 - hyper3_, 1:hyper3_})
+    else:                      # one-class svm, default
+        return svm.OneClassSVM(nu=hyper1_,
                                gamma=10**hyper2_)
 
 
-def train_model(X_s, Xb_s, X, Xb, model_type, hyper1, hyper2, n_cv=3, recall_thresh=0.8):
+def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
+                hyper2, hyper3, n_cv=3, recall_thresh=0.8):
     """
     Train model using "focal_score()" metric, subject to
     recall > recall_thresh constraint.
     """
     # iterate over hypers, cv
     scores = []
-    hyper1_best = 0
-    hyper2_best = 0
+    hyp1_best = 0
+    hyp2_best = 0
+    hyp3_best = 0
     score_best = 0
     recall_best = 0
-    for h1 in hyper1:
-        for h2 in hyper2:
-            sc, rc, bg = [], [], []
-            for i in range(n_cv):
-                X_train, X_test = random_train_test_split(X_s)
-                Xb_train, Xb_test = random_train_test_split(Xb_s)
-
-                clf = build_model(model_type, h1, h2)
+    hypers = list(itertools.product(*[hyper1, hyper2, hyper3]))
+    for h1, h2, h3 in hypers:
+        sc, rc, bg = [], [], []
+        for i in range(n_cv):
+            clf = initialize_model(model_type, h1, h2, h3)
+            X_train, X_test = random_train_test_split(X_s)
+            Xb_train, Xb_test = random_train_test_split(Xb_s)
+            if model_type == 'BiasedSVM':
+                #Pseudo-Outliers, see Baldeck et al. (2015)
+                PO, _ = random_train_test_split(np.concatenate((X_train,
+                                                                Xb_train)))
+                X_ = np.concatenate((X_train, PO))
+                y_ = np.concatenate((np.ones(len(X_train)),
+                                     -1*np.ones(len(PO))))
+                clf.fit(X_, y_)
+            else:
                 clf.fit(X_train)
-                y_pred_test = clf.predict(X_test)
-                y_pred_bkgnd = clf.predict(Xb_train)
-                sc_, rc_, bg_ = focal_score(y_pred_test, y_pred_bkgnd, h1, h2)
-                sc.append(sc_)
-                rc.append(rc_)
-                bg.append(bg_)
-
-            meansc = np.mean(sc)
-            meanrc = np.mean(rc)
-            meanbg = np.mean(bg)
-            if (meansc > score_best) and (meanrc > recall_thresh):
-                hyper1_best = h1
-                hyper2_best = h2
-                recall_best = meanrc
-                score_best = meansc
-            scores.append([h1, h2, meansc, meanrc, meanbg])
+            y_pred_test = clf.predict(X_test)
+            y_pred_bkgnd = clf.predict(Xb_train)
+            sc_, rc_, bg_ = focal_score(y_pred_test, y_pred_bkgnd, h1, h2, h3)
+            sc.append(sc_)
+            rc.append(rc_)
+            bg.append(bg_)
+        meansc = np.mean(sc)
+        meanrc = np.mean(rc)
+        meanbg = np.mean(bg)
+        
+        if (meansc > score_best) and (meanrc > recall_thresh):
+            hyp1_best = h1
+            hyp2_best = h2
+            hyp3_best = h3
+            recall_best = meanrc
+            score_best = meansc
+        scores.append([h1, h2, h3, meansc, meanrc, meanbg])
 
     # train best model
-    clf_best = build_model(model_type, hyper1_best, hyper2_best)
-    clf_best.fit(X_train)
+    clf_best = initialize_model(model_type, hyp1_best, hyp2_best, hyp3_best)
+    if model_type == 'BiasedSVM':
+        PO, _ = random_train_test_split(np.concatenate((X_s, Xb_s)))
+        X_ = np.concatenate((X_s, PO))
+        y_ = np.concatenate((np.ones(len(X_s)), -1*np.ones(len(PO))))
+        clf_best.fit(X_, y_)
+    else:
+        clf_best.fit(X_s)
 
     # write positive/negative classes to file
     y_X = clf_best.predict(X_s)
@@ -194,9 +208,9 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1, hyper2, n_cv=3, recall_thr
     # write/save stuff
     clf_name = 'models/%s.pkl'%model_type
     joblib.dump(clf_best, clf_name)
-    best = [clf_best, hyper1_best, hyper2_best, score_best]
-    print(('best model is hyper1=%f, hyper2=%f, recall=%f, score=%f')
-          % (hyper1_best, hyper2_best, recall_best, score_best))
+    best = [clf_best, hyp1_best, hyp2_best, hyp3_best, score_best]
+    print(('best model: hyper1=%f, hyper2=%f, hyper3=%f, recall=%f, score=%f')
+          % (hyp1_best, hyp2_best, hyp3_best, recall_best, score_best))
     return scores, best
 
 
@@ -283,16 +297,35 @@ if __name__ == '__main__':
     good_dir = 'repo_data/top_stars_stats_Python.txt'
     bad_dir = 'repo_data/bottom_stars_stats_Python.txt'
 
-    # train params
-    nu = np.linspace(0.01, 1, 20)  # 0-1 range
-    loggamma = np.linspace(-4, 0, 10)
-    n_cv = 3
+    # params
+    N_hyper = 5     # hyper coarse-ness
+    plot = False    # output plots
 
     # prepare data
     X_s, Xb_s, X, Xb = prepare_data(good_dir, bad_dir)
 
     # calculate PCs if desired
-    X_PC, Xb_PC = get_PCs(X_s, Xb_s)
+    X_PC, Xb_PC = get_PCs(X_s, Xb_s, plot)
 
-    # train model
-    scores, best = train_model(X_s, Xb_s, X, Xb, nu, loggamma, n_cv)
+    # train model - one-class svm (OC-SVM)
+    print('training One-Class SVM')
+    nu = np.linspace(0.01, 1, N_hyper)  # 0-1 range
+    logg = np.linspace(-4, 0, N_hyper)  # log(gamma)
+    dummy = [1]
+    scoresO, bestO = train_model(X_s, Xb_s, X, Xb, 'OC-SVM',
+                                 nu, logg, dummy)
+
+    # train model - Isolation Forest (IsoForest)
+    print('Isolation Forest')
+    contamination = np.linspace(0.01, 1, N_hyper)
+    max_samples = np.linspace(0.2, 1, N_hyper)
+    dummy = [1]
+    scoresI, bestI = train_model(X_s, Xb_s, X, Xb, 'IsoForest',
+                                 contamination, max_samples, dummy)
+
+    # train model - Biased SVM (BiasedSVM)
+#    print('Biased SVM')
+#    logC = np.linspace(-4, 4, N_hyper)
+#    logg = np.linspace(-4, 0, N_hyper)
+#    class_weight = np.linspace(0.35, 0.95, 5)
+#    scoresI, bestI = train_model(X_s, Xb_s, X, Xb, 'BiasedSVM', logC, logg, class_weight)
