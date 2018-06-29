@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     # params
     N_hyper = 10     # hyper coarse-ness
-    plot = False    # output plots
+    plot = True    # output plots
     dummy = [1]     # dummy needed for some models to populate field
 
     # prepare data

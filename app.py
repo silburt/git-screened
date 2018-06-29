@@ -163,7 +163,7 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False, pep8=False, nbins=
         return html.Div([html.H3('{} Quality is {}'.format(HR_feature[feat], quality_label), style={'color':color})])
 
 
-def output(input_value, GP, Xr, score, checklist):
+def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     # classification score
     meme = None
     if score == 1:
@@ -183,8 +183,7 @@ def output(input_value, GP, Xr, score, checklist):
     if 'metrics' in checklist:
         graph_flag = True
 
-    X_pos = np.load('models/X_pos_unscaled.npy')
-    #X_neg = np.load('models/X_neg.npy')
+    X_pos = np.load('models/X_pos_unscaled_%s.npy'%modeltype)
     return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                     html.Div([
                               html.H2('Status: {}'.format(outcome), style={'color':color}),
