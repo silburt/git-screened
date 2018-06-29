@@ -73,6 +73,10 @@ app.layout = html.Div([
 
 # SCRAPING/PROCESSING FUNCTIONS
 def digest_repo(repo_url, GProfile):
+    """
+    Look through each file and directory, extract metrics from
+    each python file. Recursive function.
+    """
     r = gf.get_request('%s' % repo_url)
     if r.ok:
         repoItems = json.loads(r.text or r.content)
@@ -90,6 +94,10 @@ def digest_repo(repo_url, GProfile):
 
 
 def get_features(item):
+    """
+    Top-level function that scrapes features for each python file
+    and stores it in a Github_Profile class.
+    """
     GP = gs.Github_Profile()
     contents_url = '%s/contents' % item['url']
 
@@ -112,6 +120,9 @@ def get_features(item):
 
 # OUTPUT FUNCTIONS
 def get_quality(pcnt):
+    """
+    Maps percentileofscore value to quality descriptor.
+    """
     if pcnt < 10:
         return 'POOR', 'red'
     elif pcnt > 10 and pcnt < 30:
@@ -124,6 +135,10 @@ def get_quality(pcnt):
 
 def output_feature(Xp, Xr, feat, repo_name, graph_flag=False,
                    pep8=False, nbins=30):
+    """
+    Outputs histogram and percentile score for given feature for the
+    pre-scraped "Industry Standard" repos, as well as for the repo in question.
+    """
     features = ['code/files', 'comment/code lines', 'test/code lines',
                 'readme/code lines', 'docstring/code lines',
                 'pep8 errors/code lines']
@@ -166,6 +181,10 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False,
 
 
 def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
+    """
+    Top-level function that outputs the pass/fail classification score,
+    quality scores for each metric, meme, and histograms.
+    """
     # classification score
     meme = None
     rand = np.random.randint(1, 5)
@@ -202,13 +221,19 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
                      ])
 
 
-# Main App Callback
 @app.callback(
     Output(component_id='my-div', component_property='children'),
     [Input('button', 'n_clicks')],
     state=[State(component_id='repo', component_property='value'),
            State(component_id='checklist', component_property='values')])
 def update_output_div(n_clicks, input_value, checklist):
+    """
+    Main App Callback. Takes a user/repository as input, scrapes the stats
+    using the Github API, classifies the repository using the pre-trained
+    One-Class SVM model, and sends all the information to output() to be
+    output on the screen. Saves a querried Github_Profile for faster loading
+    subsequent times.
+    """
     repo_path = 'saved_repo_profiles/GP_%s.pkl' % (input_value.replace('/', '_'))
     if os.path.isfile(repo_path):  # if profile already exists, don't re-scrape
         GP = joblib.load(repo_path)

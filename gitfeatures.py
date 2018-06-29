@@ -22,7 +22,7 @@ def get_request(url, timeout=10):
                 authtoken = open('../keys_passwords/token.txt').read()
                 r = requests.get(url, headers={"Accept":
                     "application/vnd.github.mercy-preview+json",
-                    "Authorization": "token %s"%authtoken},
+                    "Authorization": "token %s" % authtoken},
                     auth=HTTPBasicAuth(username, pw), timeout=timeout)
             except:
                 r = requests.get(url, headers={"Accept":
@@ -54,30 +54,18 @@ def get_readme_length(contents_url, GProfile):
                 GProfile.readme_lines = len(text.splitlines())
 
 
-def get_comment_code_ratio(text, GProfile):
+def get_comments(text, sym_s, sym_e):
     """
-    Get frequency of comments vs. code. ***** CAN SHORTEN THIS 
+    Get frequency of comments/docstrings vs. code.
     """
-    for sym_s, sym_e in [('#','\n')]:
-        start = text.find(sym_s)
+    start = text.find(sym_s)
+    end = text.find(sym_e, start + 1)
+    n_comments = 0
+    while start != -1 and end != -1:
+        n_comments += len(text[start: end].split('\n'))
+        start = text.find(sym_s, end + 1)
         end = text.find(sym_e, start + 1)
-        comm_len = 0
-        while start != -1 and end != -1:
-            comm_len += len(text[start: end].split('\n'))
-            start = text.find(sym_s, end + 1)
-            end = text.find(sym_e, start + 1)
-
-    for sym_s, sym_e in [('"""', '"""')]:
-        start = text.find(sym_s)
-        end = text.find(sym_e, start + 1)
-        doc_len = 0
-        while start != -1 and end != -1:
-            doc_len += len(text[start: end].split('\n'))
-            start = text.find(sym_s, end + 1)
-            end = text.find(sym_e, start + 1)
-
-    GProfile.comment_lines += comm_len
-    GProfile.docstring_lines += doc_len
+    return n_comments
 
 
 def get_pep8_errs(text, GProfile, show_source=True):
