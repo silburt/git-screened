@@ -1,11 +1,9 @@
 # Script that scrapes a collection of repositories fitting specified criteria
 # (e.g. number of stars, coding language, etc.) and saves their Github API
 # calls into a text file.
-import os
-from requests.auth import HTTPBasicAuth
-import requests
 import json
 import gitfeatures as gf
+
 
 def scrape_repos_by_specs(name, raw_links, n_pages=10, start_page=0):
     n_scraped = 0

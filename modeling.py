@@ -4,9 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.externals import joblib
 from sklearn.decomposition import PCA
 from sklearn import svm
-from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
 import itertools
 
 
@@ -104,7 +102,7 @@ def random_train_test_split(X, train_frac=0.8):
     np.random.shuffle(rN)  # randomly shuffle data
     train_i = rN[0: int(train_frac * N)]
     test_i = rN[int(train_frac * N):]
-    
+
     X_train, X_test = X[train_i], X[test_i]
     return X_train, X_test
 
@@ -131,15 +129,15 @@ def focal_score(y_pred_test, y_pred_bkgnd, h1, h2, h3):
 
 
 def initialize_model(type, hyper1_, hyper2_, hyper3_):
-    if type == 'IsoForest':    # isolation forest
+    if type == 'IsoForest':            # isolation forest
         return IsolationForest(contamination=hyper1_,
                                max_samples=hyper2_,
                                n_estimators=200)
-    elif type == 'BiasedSVM':  # biased svm
-        return svm.SVC(C=10**hyper1_,  # inverse regularization
+    elif type == 'BiasedSVM':          # biased svm
+        return svm.SVC(C=10**hyper1_,  # inverse regularization param
                        gamma=10**hyper2_,
-                       class_weight={-1:1 - hyper3_, 1:hyper3_})
-    else:                      # one-class svm, default
+                       class_weight={-1: 1 - hyper3_, 1: hyper3_})
+    else:                              # one-class svm, default
         return svm.OneClassSVM(nu=hyper1_,
                                gamma=10**hyper2_)
 
@@ -165,12 +163,12 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
             X_train, X_test = random_train_test_split(X_s)
             Xb_train, Xb_test = random_train_test_split(Xb_s)
             if model_type == 'BiasedSVM':
-                #Pseudo-Outliers, see Baldeck et al. (2015)
+                # Pseudo-Outliers, see Baldeck et al. (2015)
                 PO, _ = random_train_test_split(np.concatenate((X_train,
                                                                 Xb_train)))
                 X_ = np.concatenate((X_train, PO))
                 y_ = np.concatenate((np.ones(len(X_train)),
-                                     -1*np.ones(len(PO))))
+                                     -1 * np.ones(len(PO))))
                 clf.fit(X_, y_)
             else:
                 clf.fit(X_train)
@@ -183,7 +181,7 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
         meansc = np.mean(sc)
         meanrc = np.mean(rc)
         meanbg = np.mean(bg)
-        
+
         if (meansc > score_best) and (meanrc > recall_thresh):
             hyp1_best = h1
             hyp2_best = h2
@@ -197,7 +195,7 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
     if model_type == 'BiasedSVM':
         PO, _ = random_train_test_split(np.concatenate((X_s, Xb_s)))
         X_ = np.concatenate((X_s, PO))
-        y_ = np.concatenate((np.ones(len(X_s)), -1*np.ones(len(PO))))
+        y_ = np.concatenate((np.ones(len(X_s)), -1 * np.ones(len(PO))))
         clf_best.fit(X_, y_)
     else:
         clf_best.fit(X_s)
@@ -207,11 +205,11 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
     y_Xb = clf_best.predict(Xb_s)
     X_pos = np.concatenate((X[y_X == 1], Xb[y_Xb == 1]))  # unscaled
     X_neg = np.concatenate((X[y_X == -1], Xb[y_Xb == -1]))  # unscaled
-    np.save('models/X_pos_unscaled_%s.npy'%model_type, X_pos)
-    np.save('models/X_neg_unscaled_%s.npy'%model_type, X_neg)
+    np.save('models/X_pos_unscaled_%s.npy' % model_type, X_pos)
+    np.save('models/X_neg_unscaled_%s.npy' % model_type, X_neg)
 
     # write/save stuff
-    clf_name = 'models/%s.pkl'%model_type
+    clf_name = 'models/%s.pkl' % model_type
     joblib.dump(clf_best, clf_name)
     best = [clf_best, hyp1_best, hyp2_best, hyp3_best, score_best]
     print(('best model: hyper1=%f, hyper2=%f, hyper3=%f, recall=%f, score=%f')
@@ -234,17 +232,19 @@ def get_PCs(X_s, Xb_s, plot=False):
         # Plot data in PC1 vs. PC2 space
         import matplotlib.pyplot as plt
         plt.figure(figsize=(8, 6))
-        plt.plot(X_PC[:, 0], X_PC[:, 1], '.', color='green', label='200+ stars (positive class)')
-        plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', color='orange', label='0 stars (background class)', alpha=0.6)
+        plt.plot(X_PC[:, 0], X_PC[:, 1], '.', color='green',
+                 label='200+ stars (positive class)')
+        plt.plot(Xb_PC[:, 0], Xb_PC[:, 1], '.', color='orange',
+                 label='0 stars (background class)', alpha=0.6)
         plt.xlabel('Principal Component 1', fontsize=20)
         plt.ylabel('Principal Component 2', fontsize=20)
-        #plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
+        # plt.title('explained variance: %.2f' % np.sum(pca.explained_variance_ratio_))
         plt.legend()
         plt.savefig('images/PCs.png')
-    
+
         # Plot Feature importances as bar graph
-        ind = np.arange(len(train_features))    # the x locations for the groups
-        width = 0.35                            # the width of the bars
+        ind = np.arange(len(train_features))   # the x locations for the groups
+        width = 0.35                           # the width of the bars
         fig, ax = plt.subplots(figsize=(8, 6))
         pltPC1 = ax.bar(ind, np.abs(pca.components_[0]), width, color='r')
         pltPC2 = ax.bar(ind + width, np.abs(pca.components_[1]), width, color='y')
@@ -255,8 +255,6 @@ def get_PCs(X_s, Xb_s, plot=False):
         ax.legend((pltPC1[0], pltPC2[0]), ('PC1', 'PC2'))
         plt.gcf().subplots_adjust(bottom=0.25)
         plt.savefig('images/feat_importances.png')
-        #print(pd.DataFrame(pca.components_.T, columns=['PC-1','PC-2'], index=train_features))
-    
     return X_PC, Xb_PC
 
 
