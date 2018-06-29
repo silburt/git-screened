@@ -23,6 +23,7 @@ server = app.server
 #my_css_url = "https://unpkg.com/normalize.css@5.0.0"
 my_css_url = "https://codepen.io/chriddyp/pen/bWLwgP.css"
 app.css.append_css({"external_url": my_css_url})
+app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"})
 
 app.layout = html.Div([html.Div([
                                  html.H3('git-screened', style={'font-family':'Courier New',
