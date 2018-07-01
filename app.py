@@ -54,7 +54,7 @@ app.layout = html.Div([
 
          **Final Notes**: This app works best for repositories where the
          majority of code is written in Python. In addition, since the
-         statisticsare scraped in real time, large repositories will take a
+         statistics are scraped in real time, large repositories will take a
          moment.
 
         ------
