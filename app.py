@@ -190,13 +190,13 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     meme = None
     rand = np.random.randint(1, 5)
     if score == 1:
-        outcome = 'PASS'
+        outcome = 'YES'
         color = 'green'
         if 'meme' in checklist:
             meme = ('https://raw.githubusercontent.com/silburt/'
                     'git-screened/master/app_images/happy_{}.jpg'.format(rand))
     else:
-        outcome = 'FAIL'
+        outcome = 'NO'
         color = 'red'
         if 'meme' in checklist:
             meme = ('https://raw.githubusercontent.com/silburt/'
@@ -209,7 +209,7 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     X_pos = np.load('models/X_pos_unscaled_%s.npy' % modeltype)
     return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                      html.Div([
-                              html.H2('Status: {}'.format(outcome),
+                              html.H2('Production-Level Code: {}'.format(outcome),
                                       style={'color': color}),
                               html.Img(src=meme)
                               ]),
