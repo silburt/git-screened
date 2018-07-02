@@ -190,13 +190,13 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     meme = None
     rand = np.random.randint(1, 5)
     if score == 1:
-        outcome = 'YES'
+        outcome = 'PASS'
         color = 'green'
         if 'meme' in checklist:
             meme = ('https://raw.githubusercontent.com/silburt/'
                     'git-screened/master/app_images/happy_{}.jpg'.format(rand))
     else:
-        outcome = 'NO'
+        outcome = 'FAIL'
         color = 'red'
         if 'meme' in checklist:
             meme = ('https://raw.githubusercontent.com/silburt/'
