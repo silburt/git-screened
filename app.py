@@ -22,6 +22,7 @@ my_css_url = "https://codepen.io/chriddyp/pen/bWLwgP.css"
 my_css_button = "https://codepen.io/chriddyp/pen/brPBPO.css"
 app.css.append_css({"external_url": my_css_url})
 app.css.append_css({"external_url": my_css_button})
+app.title = 'git-screened'
 
 app.layout = html.Div([
     html.Div([
@@ -39,7 +40,7 @@ app.layout = html.Div([
          Here, "industry standard" refers to the 6000 most starred Python
          repositories on Github. This project was completed over the Summer
          2018 [Insight Data Science](https://www.insightdatascience.com/)
-         program.The code, along with additional details, are available on
+         program. The code, along with additional details, are available on
          [Github](https://github.com/silburt/git-screened).
 
          **Instructions**: Enter a Github repository in the search box below

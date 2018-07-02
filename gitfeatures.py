@@ -42,7 +42,7 @@ def get_readme_length(contents_url, GProfile):
         contents = json.loads(r.text or r.content)
         readme_url = None
         for c in contents:
-            if 'README' in c['name']:
+            if 'readme' in c['name'].lower():
                 readme_url = c['download_url']
                 break
         if readme_url:
