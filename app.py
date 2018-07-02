@@ -218,7 +218,7 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     X_pos = np.load('models/X_pos_unscaled_%s.npy' % modeltype)
     return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                      html.Div([
-                              html.H2('Production-Level Code Review: {}'.format(outcome),
+                              html.H2('Code Review: {}'.format(outcome),
                                       style={'color': color}),
                               html.Img(src=meme)
                               ]),
