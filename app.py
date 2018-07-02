@@ -101,20 +101,21 @@ def get_features(item):
     GP = gs.Github_Profile()
     contents_url = '%s/contents' % item['url']
 
-    # scrape commit history
-    gf.get_repo_commit_history(item, GP)
-
     # scrape readme
     gf.get_readme_length(contents_url, GP)
 
     # scrape file-by-file stats
     digest_repo(contents_url, GP)
 
+    # scrape commit history
+    gf.get_repo_commit_history(item, GP)
+
     # scrape stargazers
     GP.n_stars = item['stargazers_count']
 
     # scrape forks
     GP.n_forks = item['forks_count']
+    
     return GP
 
 

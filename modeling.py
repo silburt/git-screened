@@ -258,7 +258,9 @@ def get_PCs(X_s, Xb_s, plot=False):
     return X_PC, Xb_PC
 
 
-def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
+def classify_repo(GP, model_file='models/OC-SVM.pkl',
+                  scaler_file='models/scaler.pkl',
+                  minvals_file='models/minvals.pkl'):
     """
     Predict class of scraped repo using pre-trained One-Class SVM model.
     """
@@ -277,10 +279,8 @@ def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
     data = make_features(pd.DataFrame.from_dict([data]))
 
     # prepare features, preprocess.
-    scaler_name = 'models/scaler.pkl'
-    minvals_name = 'models/minvals.pkl'
-    scaler = joblib.load(scaler_name)
-    minvals = joblib.load(minvals_name)
+    scaler = joblib.load(scaler_file)
+    minvals = joblib.load(minvals_file)
     X = np.log10(data[train_features])
     for c in X.columns:
         minval = minvals[c]
@@ -288,7 +288,7 @@ def classify_repo(GP, mdl_file='models/OC-SVM.pkl'):
         X.loc[X[c] == np.inf, c] = minval
 
     # prepare model
-    clf = joblib.load(mdl_file)
+    clf = joblib.load(model_file)
     repo_pred = clf.predict(scaler.transform(X))[0]
 
     # generate pred, X is kept unscaled for plotting!
@@ -326,8 +326,11 @@ if __name__ == '__main__':
                                  contamination, max_samples, dummy)
 
     # train model - Biased SVM (BiasedSVM)
-#    print('Biased SVM')
-#    logC = np.linspace(-4, 4, N_hyper)
-#    logg = np.linspace(-4, 0, N_hyper)
-#    class_weight = np.linspace(0.35, 0.95, 5)
-#    scoresI, bestI = train_model(X_s, Xb_s, X, Xb, 'BiasedSVM', logC, logg, class_weight)
+    biased_SVM = 0
+    if biased_SVM:
+        print('Biased SVM')
+        logC = np.linspace(-4, 4, N_hyper)
+        logg = np.linspace(-4, 0, N_hyper)
+        class_weight = np.linspace(0.35, 0.95, 5)
+        scoresI, bestI = train_model(X_s, Xb_s, X, Xb, 'BiasedSVM',
+                                     logC, logg, class_weight)
