@@ -1,17 +1,17 @@
 import json
 from sklearn.externals import joblib
-import numpy as np
 import sys
 sys.path.append('../')
 import modeling as mod
 import gitfeatures as gf
 import gitscraper as gs
 
+
 class TestPrediction(object):
     """
     Test model prediction. 'Divide by zero encuontered in log10'
     warning expected.
-    
+
     Note: The pickled files used for this example are not available
     online since pickled files generally aren't loadable across
     systems. Running 'python modeling.py' will generate the model,
@@ -33,7 +33,13 @@ class TestPrediction(object):
         assert pass_ == 1
         assert fail_ == -1
 
-def setup(repo):
+
+def pickle_repo(repo):
+    """
+    Basic function that scrapes repo data using the Github API and
+    saves it locally as a pickled file, to be used by test_classify()
+    above.
+    """
     GP = gs.Github_Profile()
     url = 'https://api.github.com/repos/%s' % repo
     repo_path = 'GP_%s.pkl' % (repo.replace('/', '_'))
@@ -43,6 +49,7 @@ def setup(repo):
         gs.get_features(item, GP)
         joblib.dump(GP, repo_path)
 
+
 if __name__ == '__main__':
     repo = sys.argv[1]
-    setup(repo)
+    pickle_repo(repo)

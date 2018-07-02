@@ -6,7 +6,7 @@ import gitscraper as gs
 
 class TestFeatures(object):
     """Test features scraped from each Github repo."""
-    
+
     def setup(self):
         self.text = open('sample_script.py', 'r').read()
 
@@ -35,6 +35,7 @@ class TestFeatures(object):
         assert GP.pep8['E7'] == 1
         assert GP.pep8['W2'] == 3
 
+
 class TestReadme(object):
     """Test readme length feature."""
 
@@ -43,7 +44,3 @@ class TestReadme(object):
         url = 'https://api.github.com/repos/silburt/DeepMoon/contents'
         gf.get_readme_length(url, GP)
         assert GP.readme_lines == 99
-
-
-
-

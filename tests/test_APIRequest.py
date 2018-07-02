@@ -20,4 +20,4 @@ class TestAPIRequest(object):
 
     def test_RequestFailure(self):
         r = gf.get_request(self.url, timeout=1e-4)
-        assert r == None
+        assert r is None
