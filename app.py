@@ -146,6 +146,12 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False,
                 'pep8 errors/code lines']
     HR_feature = ['Code Distribution', 'Commenting', 'Unit Test', 'Readme',
                   'Docstring', 'pep8 Error (more=worse)']
+    HR_explanation = ['Measures total lines of code divided by number of Python files.',
+                      'Measures number of comment lines divided by total code lines.',
+                      'Measures number of unit test lines divided by total code lines.',
+                      'Measures length of readme file divided by total code lines.',
+                      'Measures number of docstring lines divided by total code lines.',
+                      'Measures number of pep8 errors divided by total code lines.']
 
     if pep8:  # for pep8 errors fewer is better
         Xr_ = 0
@@ -167,6 +173,8 @@ def output_feature(Xp, Xr, feat, repo_name, graph_flag=False,
         max_bin = np.max(np.histogram(Xp[:, feat], bins=nbins)[0])
         return html.Div([html.H3('{} quality is {}.'.format(HR_feature[feat], quality_label),
                                  style={'color': color}),
+                         html.H3('{}'.format(HR_explanation[feat]),
+                                 style={'font-style':'italic', 'font-size':20}),
                          dcc.Graph(id='basic-interactions{}'.format(feat),
                                    figure={'data': [{'x': pl_P, 'nbinsx': nbins,
                                                      'name': 'industry standard',
@@ -210,7 +218,7 @@ def output(input_value, GP, Xr, score, checklist, modeltype='OC-SVM'):
     X_pos = np.load('models/X_pos_unscaled_%s.npy' % modeltype)
     return html.Div([html.H1('Results for Repository: "{}":'.format(input_value)),
                      html.Div([
-                              html.H2('Production-Level Code: {}'.format(outcome),
+                              html.H2('Production-Level Code Review: {}'.format(outcome),
                                       style={'color': color}),
                               html.Img(src=meme)
                               ]),
