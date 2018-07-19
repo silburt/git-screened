@@ -50,8 +50,12 @@ app.layout = html.Div([
          of the repository (generated from a pre-trained One-Class SVM model).
          Ticking 'Detailed Metrics' will output histograms that
          visualize/contextualize the searched repository to the industry
-         standard (note: histograms are dislpayed in log scale). Lastly, a
-         festive meme can also be output ;).
+         standard (note: histograms are dislpayed in log scale). Scraped
+         repositories are by default saved locally for faster re-runs, but ticking
+         'Rescrape Repository' will force a re-scraping of the repository
+         using the Github API. This is useful for classifying the most up-to-date
+         version of a repository, vs. an older version previously classified by
+         git-screened. Finally, a festive meme can also be output ;).
 
          **Final Notes**: This app works best for repositories where the
          majority of code is written in Python. In addition, since the
@@ -67,6 +71,7 @@ app.layout = html.Div([
     dcc.Input(value='', type='text', id='repo'),
     html.Button('Search', id='button'),
     dcc.Checklist(options=[{'label': 'Detailed Metrics', 'value': 'metrics'},
+                           {'label': 'Rescrape Repository', 'value': 'rescrape'},
                            {'label': 'Festive Meme', 'value': 'meme'}],
                   values=[], id='checklist'),
     html.Div(id='my-div', children='Enter a value and press Search')])
@@ -245,7 +250,8 @@ def update_output_div(n_clicks, input_value, checklist):
     subsequent times.
     """
     repo_path = 'saved_repo_profiles/GP_%s.pkl' % (input_value.replace('/', '_'))
-    if os.path.isfile(repo_path):  # if profile already exists, don't re-scrape
+    # if profile already exists, don't re-scrape
+    if os.path.isfile(repo_path) and 'rescrape' not in checklist:
         GP = joblib.load(repo_path)
     else:
         r = gf.get_request('https://api.github.com/repos/%s' % input_value)
