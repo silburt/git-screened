@@ -155,6 +155,7 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
     hyp3_best = 0
     score_best = 0
     recall_best = 0
+    bckgnd_best = 0
     hypers = list(itertools.product(*[hyper1, hyper2, hyper3]))
     for h1, h2, h3 in hypers:
         sc, rc, bg = [], [], []
@@ -187,6 +188,7 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
             hyp2_best = h2
             hyp3_best = h3
             recall_best = meanrc
+            bckgnd_best = meanbg
             score_best = meansc
         scores.append([h1, h2, h3, meansc, meanrc, meanbg])
 
@@ -212,8 +214,8 @@ def train_model(X_s, Xb_s, X, Xb, model_type, hyper1,
     clf_name = 'models/%s.pkl' % model_type
     joblib.dump(clf_best, clf_name)
     best = [clf_best, hyp1_best, hyp2_best, hyp3_best, score_best]
-    print(('best model: hyper1=%f, hyper2=%f, hyper3=%f, recall=%f, score=%f')
-          % (hyp1_best, hyp2_best, hyp3_best, recall_best, score_best))
+    print(('best: hyp1=%f, hyp2=%f, hyp3=%f, recall=%f, bckgnd=%f, score=%f')
+          % (hyp1_best, hyp2_best, hyp3_best, recall_best, bckgnd_best, score_best))
     return scores, best
 
 

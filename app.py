@@ -257,9 +257,13 @@ def update_output_div(n_clicks, input_value, checklist):
             return html.Div([html.H2('Couldnt find: "{}" on Github'.format(input_value),
                                      style={'font-style': 'normal', 'font-size': 15})])
 
-    score, Xr = mod.classify_repo(GP)  # r for repo
-    return output(input_value, GP, Xr, score, checklist)
-
+    try:
+        score, Xr = mod.classify_repo(GP)  # r for repo
+        return output(input_value, GP, Xr, score, checklist)
+    except:
+        string = '"{}" could not be processed. Does it contain few/no .py files?'
+        return html.Div([html.H2(string.format(input_value),
+                          style={'font-style': 'normal', 'font-size': 15})])
 
 if __name__ == '__main__':
     app.server.run(port=8000, host='0.0.0.0')
